@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Road Trip Planner</title>
+
+    <!-- This line loads our style.css file so the page looks good -->
+    <link rel="stylesheet" href="style.css" />
+  </head>
+
+  <body>
+
+    <!-- HEADER: the top banner with the app name -->
+    <header>
+      <h1>🗺️ Road Trip Planner</h1>
+      <p>Find dietary-friendly restaurant stops along your route</p>
+    </header>
+
+    <!-- MAIN CONTENT: split into left panel (form) and right panel (map) -->
+    <main>
+
+      <!-- LEFT PANEL: the form where users enter their trip details -->
+      <section class="sidebar">
+
+        <h2>Plan Your Trip</h2>
+
+        <!-- A "form" groups related inputs together -->
+        <form id="trip-form">
+
+          <!-- Start city input -->
+          <div class="form-group">
+            <label for="start">Starting City</label>
+            <input
+              type="text"
+              id="start"
+              placeholder="e.g. Nashville, TN"
+            />
+          </div>
+
+          <!-- End city input -->
+          <div class="form-group">
+            <label for="end">Destination City</label>
+            <input
+              type="text"
+              id="end"
+              placeholder="e.g. Sedona, AZ"
+            />
+          </div>
+
+          <!-- Stop interval input -->
+          <div class="form-group">
+            <label for="interval">Stop every (miles)</label>
+            <input
+              type="number"
+              id="interval"
+              placeholder="e.g. 150"
+              min="50"
+              max="500"
+            />
+          </div>
+
+          <!-- Dietary preferences multi-select dropdown -->
+          <div class="form-group">
+            <label>Dietary Preferences</label>
+            <div class="diet-options-list" id="diet-dropdown-menu">
+              <label class="diet-option"><input type="checkbox" value="gluten free"> Gluten Free</label>
+              <label class="diet-option"><input type="checkbox" value="vegan"> Vegan</label>
+              <label class="diet-option"><input type="checkbox" value="vegetarian"> Vegetarian</label>
+              <label class="diet-option"><input type="checkbox" value="halal"> Halal</label>
+              <label class="diet-option"><input type="checkbox" value="kosher"> Kosher</label>
+              <label class="diet-option"><input type="checkbox" value="dairy free"> Dairy Free</label>
+              <label class="diet-option"><input type="checkbox" value="nut free"> Nut Free</label>
+            </div>
+          </div>
+
+          <!-- The big button that kicks everything off -->
+          <button type="button" id="search-btn">Find My Stops</button>
+
+        </form>
+
+        <!-- RESULTS: this section is hidden until the user searches -->
+        <div id="results" class="hidden">
+          <h2>Suggested Stops</h2>
+          <!-- JavaScript will fill this list in dynamically -->
+          <ul id="stops-list"></ul>
+
+          <!-- CUSTOM STOP: appears below results once a route is generated -->
+          <div id="custom-stop-section">
+            <h3>Add a specific city</h3>
+            <p class="custom-stop-hint">
+              Want to stop somewhere in particular? Search for options in any city along your route.
+            </p>
+            <div class="custom-stop-form">
+              <input
+                type="text"
+                id="custom-city"
+                placeholder="e.g. Joplin, MO"
+              />
+              <button type="button" id="add-stop-btn">Add Stop</button>
+            </div>
+            <div id="custom-stop-error" class="error-message hidden"></div>
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- RIGHT PANEL: where the map will appear -->
+      <section class="map-panel">
+        <!-- Google Maps draws itself into this empty div -->
+        <div id="map"></div>
+      </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer>
+      <p>Built with Google Maps &amp; Places API</p>
+    </footer>
+
+    <!-- This line loads our app.js file — it goes at the BOTTOM so the page
+         loads first before JavaScript runs -->
+    <!-- app.js must load BEFORE the Maps API so initMap() is defined in time -->
+    <script src="app.js"></script>
+
+    <!-- Google Maps API — loads the map, places search, and geometry tools.
+         "callback=initMap" tells Google to call our initMap() function
+         once it finishes loading. -->
+    <script
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBx0ahH5VeUgK4C6GJsDWUU2suNAHTFPiw&libraries=places,geometry&callback=initMap"
+      async
+      defer
+    ></script>
+
+  </body>
+</html>
