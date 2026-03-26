@@ -63,14 +63,20 @@
           <!-- Dietary preferences multi-select dropdown -->
           <div class="form-group">
             <label>Dietary Preferences</label>
-            <div class="diet-options-list" id="diet-dropdown-menu">
-              <label class="diet-option"><input type="checkbox" value="gluten free"> Gluten Free</label>
-              <label class="diet-option"><input type="checkbox" value="vegan"> Vegan</label>
-              <label class="diet-option"><input type="checkbox" value="vegetarian"> Vegetarian</label>
-              <label class="diet-option"><input type="checkbox" value="halal"> Halal</label>
-              <label class="diet-option"><input type="checkbox" value="kosher"> Kosher</label>
-              <label class="diet-option"><input type="checkbox" value="dairy free"> Dairy Free</label>
-              <label class="diet-option"><input type="checkbox" value="nut free"> Nut Free</label>
+            <div class="diet-dropdown" id="diet-dropdown">
+              <button type="button" class="diet-toggle" id="diet-toggle-btn">
+                <span id="diet-toggle-label">None selected</span>
+                <span class="diet-toggle-arrow">▾</span>
+              </button>
+              <div class="diet-options-list" id="diet-dropdown-menu" hidden>
+                <label class="diet-option"><input type="checkbox" value="gluten free"> Gluten Free</label>
+                <label class="diet-option"><input type="checkbox" value="vegan"> Vegan</label>
+                <label class="diet-option"><input type="checkbox" value="vegetarian"> Vegetarian</label>
+                <label class="diet-option"><input type="checkbox" value="halal"> Halal</label>
+                <label class="diet-option"><input type="checkbox" value="kosher"> Kosher</label>
+                <label class="diet-option"><input type="checkbox" value="dairy free"> Dairy Free</label>
+                <label class="diet-option"><input type="checkbox" value="nut free"> Nut Free</label>
+              </div>
             </div>
           </div>
 

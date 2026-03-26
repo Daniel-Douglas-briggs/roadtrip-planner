@@ -15,7 +15,8 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   background-color: #f5f5f0;
   color: #333;
-  min-height: 100vh;
+  height: 100vh;      /* lock to viewport — prevents the page from scrolling */
+  overflow: hidden;   /* any scrolling happens inside the sidebar, not the page */
   display: flex;
   flex-direction: column;
 }
@@ -111,13 +112,66 @@ input[type="number"]:focus {
   background: white;
 }
 
-/* ── Dietary preference checkbox list ── */
+/* ── Dietary preference dropdown ── */
 
-.diet-options-list {
+.diet-dropdown {
+  position: relative;
+}
+
+/* The clickable toggle bar */
+.diet-toggle {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 9px 12px;
+  background: white;
   border: 1.5px solid #ddd;
   border-radius: 8px;
+  font-size: 0.95rem;
+  color: #333;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.2s;
+}
+
+.diet-toggle:hover,
+.diet-toggle:focus {
+  border-color: #2c5f2e;
+  outline: none;
+}
+
+/* Arrow icon rotates when open */
+.diet-toggle-arrow {
+  font-size: 0.8rem;
+  color: #888;
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+
+.diet-dropdown.open .diet-toggle-arrow {
+  transform: rotate(180deg);
+}
+
+/* Merge toggle bottom border with list top border when open */
+.diet-dropdown.open .diet-toggle {
+  border-color: #2c5f2e;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+/* Checkbox list — hidden until dropdown is opened */
+.diet-options-list {
+  display: none;
+  border: 1.5px solid #2c5f2e;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
   background: white;
   padding: 4px 0;
+}
+
+.diet-dropdown.open .diet-options-list {
+  display: block !important; /* overrides the HTML hidden attribute when open */
 }
 
 .diet-option {

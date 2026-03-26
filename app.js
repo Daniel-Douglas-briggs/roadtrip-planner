@@ -57,9 +57,45 @@ const stopsList = document.getElementById("stops-list");
 const searchBtn = document.getElementById("search-btn");
 
 // ── Dietary preference checkboxes ────────────────────────────────────────────
-// Always-visible checkbox list — no dropdown toggle, nothing to break.
+// Dropdown toggle — clicking the bar opens/closes the checkbox list.
 
-const dietMenu = document.getElementById("diet-dropdown-menu");
+const dietMenu        = document.getElementById("diet-dropdown-menu");
+const dietDropdown    = document.getElementById("diet-dropdown");
+const dietToggleBtn   = document.getElementById("diet-toggle-btn");
+const dietToggleLabel = document.getElementById("diet-toggle-label");
+
+// Open / close on toggle click
+dietToggleBtn.addEventListener("click", function () {
+  const isOpen = !dietMenu.hasAttribute("hidden");
+  if (isOpen) {
+    dietMenu.setAttribute("hidden", "");
+    dietDropdown.classList.remove("open");
+  } else {
+    dietMenu.removeAttribute("hidden");
+    dietDropdown.classList.add("open");
+  }
+});
+
+// Close when clicking anywhere outside the dropdown
+document.addEventListener("click", function (e) {
+  if (!dietDropdown.contains(e.target)) {
+    dietMenu.setAttribute("hidden", "");
+    dietDropdown.classList.remove("open");
+  }
+});
+
+// Update the summary label whenever a checkbox changes
+dietMenu.addEventListener("change", function () {
+  const checked = Array.from(dietMenu.querySelectorAll("input:checked"))
+    .map(function (cb) { return cb.parentElement.textContent.trim(); });
+  if (checked.length === 0) {
+    dietToggleLabel.textContent = "None selected";
+  } else if (checked.length <= 2) {
+    dietToggleLabel.textContent = checked.join(", ");
+  } else {
+    dietToggleLabel.textContent = checked.length + " selected";
+  }
+});
 
 
 // ── Step 2: react to the button being clicked ────────────────────────────────
