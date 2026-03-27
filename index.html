@@ -124,6 +124,13 @@
       <section class="map-panel">
         <!-- Google Maps draws itself into this empty div -->
         <div id="map"></div>
+        <!-- Shown if the Google Maps API fails to load -->
+        <div id="map-error" class="hidden">
+          <div class="map-error-icon">🗺️</div>
+          <h2>The map couldn't load</h2>
+          <p>This usually happens because of a network issue or a problem with the map service.</p>
+          <p>Try refreshing the page. If it keeps happening, check your internet connection.</p>
+        </div>
       </section>
 
     </main>
@@ -145,6 +152,7 @@
       src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBx0ahH5VeUgK4C6GJsDWUU2suNAHTFPiw&libraries=places,geometry&callback=initMap"
       async
       defer
+      onerror="showMapError()"
     ></script>
 
   </body>

@@ -24,6 +24,26 @@ let markers           = []; // numbered stop pins (green circles)
 let restaurantMarkers = []; // selected restaurant pins (orange)
 
 
+// ── API load error handlers ───────────────────────────────────────────────────
+// showMapError() swaps out the blank map for a friendly message.
+// It is called in two situations:
+//   1. The <script> tag itself fails (network down, URL wrong) — via onerror=
+//   2. The API key is rejected by Google — via gm_authFailure() below
+
+function showMapError() {
+  document.getElementById("map").classList.add("hidden");
+  document.getElementById("map-error").classList.remove("hidden");
+  // Disable the search button so users aren't confused by a form with no map
+  searchBtn.disabled    = true;
+  searchBtn.textContent = "Map unavailable";
+}
+
+// Google calls this automatically when the API key is invalid or restricted
+function gm_authFailure() {
+  showMapError();
+}
+
+
 // ── Step 1: initialise the map ───────────────────────────────────────────────
 // Google Maps calls this function automatically after it finishes loading
 // (because we wrote "callback=initMap" in the script tag in index.html).
