@@ -416,13 +416,14 @@ function searchAllWaypoints(waypoints, diet, totalMiles) {
     const currentWindowPoints = waypoints[index].windowPoints;
 
     getCityName(currentPoint, function (cityName) {
-      searchRestaurantsAtWaypoint(currentPoint, currentWindowPoints, cityName, diet, function (restaurants) {
+      searchRestaurantsAtWaypoint(currentPoint, currentWindowPoints, cityName, diet, function (data) {
         results.push({
           stopNumber:   currentIndex + 1,
           locationName: cityName,
           location:     currentPoint,
           windowPoints: currentWindowPoints,
-          restaurants:  restaurants,
+          restaurants:  data.restaurants,
+          pool:         data.pool,
         });
         index++;
         searchNext();
@@ -503,9 +504,11 @@ function searchRestaurantsAtWaypoint(location, windowPoints, cityName, diet, cal
             ) <= MAX_METERS;
           });
         });
-        enrichWithHours(nearby.slice(0, 3), callback);
+        enrichWithHours(nearby.slice(0, 3), function (enriched) {
+          callback({ restaurants: enriched, pool: nearby });
+        });
       } else {
-        callback([]);
+        callback({ restaurants: [], pool: [] });
       }
     }
   );
@@ -573,7 +576,7 @@ function displayResults(results, totalMiles) {
 
   results.forEach(function (stop) {
     if (stop.restaurants.length > 0) {
-      addStopCard(stop.stopNumber, stop.locationName, stop.restaurants, stop.location, stop.windowPoints);
+      addStopCard(stop.stopNumber, stop.locationName, stop.restaurants, stop.location, stop.windowPoints, stop.pool);
     } else {
       addNoResultCard(stop.stopNumber, stop.locationName);
     }
@@ -582,7 +585,8 @@ function displayResults(results, totalMiles) {
 
 // Builds one stop card containing up to 3 restaurant options.
 // Each option row is clickable to pan the map.
-function addStopCard(number, locationName, places, location, windowPoints) {
+// pool — the full list of Places results for this stop, used to power the refresh button.
+function addStopCard(number, locationName, places, location, windowPoints, pool) {
   const li     = document.createElement("li");
   li.className = "stop-card";
 
@@ -592,77 +596,113 @@ function addStopCard(number, locationName, places, location, windowPoints) {
   header.innerHTML = locationName + ' <span class="stop-badge">#' + number + '</span>';
   li.appendChild(header);
 
-  // One row per restaurant
-  places.forEach(function (place, i) {
-    const name    = place.name;
-    const address = place.formatted_address || place.vicinity || "Address unavailable";
-    const rating  = place.rating ? place.rating.toFixed(1) : "No rating";
+  // Wrapper div for the restaurant rows — cleared and rebuilt on every refresh
+  const optionsContainer = document.createElement("div");
+  li.appendChild(optionsContainer);
 
-    // Shortest distance from the restaurant to any sampled point on the route
-    // (more accurate than distance from a single waypoint dot)
-    const distanceMeters = Math.min.apply(null, windowPoints.map(function (wp) {
-      return google.maps.geometry.spherical.computeDistanceBetween(
-        wp,
-        place.geometry.location
-      );
-    }));
-    const distanceMiles = (distanceMeters / 1609.34).toFixed(1);
+  // Tracks where we are in the pool so each refresh shows the next set of options
+  let poolOffset = 3;
 
-    // Today's hours: Google indexes Mon=0 … Sun=6
-    // JavaScript's getDay() returns Sun=0 … Sat=6, so we convert
-    const jsDayIndex     = new Date().getDay();               // 0=Sun, 1=Mon …
-    const googleDayIndex = (jsDayIndex + 6) % 7;             // 0=Mon … 6=Sun
-    const todayHours     = place.weekday_text
-      ? place.weekday_text[googleDayIndex].replace(/^[^:]+:\s*/, "") // strip "Monday: "
-      : null;
+  // Builds (or rebuilds) the restaurant rows inside optionsContainer
+  function renderOptions(restaurantsToShow) {
+    optionsContainer.innerHTML = "";
 
-    // Build the "all hours" list for the expandable section
-    const allHoursHTML = place.weekday_text
-      ? place.weekday_text.map(function (line) {
-          return "<li>" + line + "</li>";
-        }).join("")
-      : "";
+    restaurantsToShow.forEach(function (place, i) {
+      const name    = place.name;
+      const address = place.formatted_address || place.vicinity || "Address unavailable";
+      const rating  = place.rating ? place.rating.toFixed(1) : "No rating";
 
-    const row     = document.createElement("div");
-    row.className = "restaurant-option" + (i < places.length - 1 ? " restaurant-option--divider" : "");
-    row.style.cursor = "pointer";
-    row.innerHTML = `
-      <div class="option-label">Option ${String.fromCharCode(65 + i)}</div>
-      <div class="restaurant-name">${name}</div>
-      <div class="restaurant-address">${address}</div>
-      <div class="restaurant-meta">
-        <span class="rating">★ ${rating}</span>
-        · <span class="distance-from-route">${distanceMiles} mi from your route</span>
-        ${todayHours ? "· <span class='today-hours'>Today: " + todayHours + "</span>" : ""}
-      </div>
-      ${allHoursHTML ? `
-        <details class="all-hours">
-          <summary>See all hours</summary>
-          <ul>${allHoursHTML}</ul>
-        </details>` : ""}
-      ${place.website ? `<a class="restaurant-website" href="${place.website}" target="_blank" rel="noopener">Visit website ↗</a>` : ""}
-    `;
+      // Shortest distance from the restaurant to any sampled point on the route
+      const distanceMeters = Math.min.apply(null, windowPoints.map(function (wp) {
+        return google.maps.geometry.spherical.computeDistanceBetween(
+          wp,
+          place.geometry.location
+        );
+      }));
+      const distanceMiles = (distanceMeters / 1609.34).toFixed(1);
 
-    // Click the option row → pin the restaurant and fit the map to show
-    // both the restaurant and the waypoint on the route
-    const restaurantLocation = place.geometry.location;
-    row.addEventListener("click", function () {
-      addRestaurantMarker(restaurantLocation, name, number);
+      // Today's hours: Google indexes Mon=0 … Sun=6
+      // JavaScript's getDay() returns Sun=0 … Sat=6, so we convert
+      const jsDayIndex     = new Date().getDay();
+      const googleDayIndex = (jsDayIndex + 6) % 7;
+      const todayHours     = place.weekday_text
+        ? place.weekday_text[googleDayIndex].replace(/^[^:]+:\s*/, "")
+        : null;
 
-      // Build a bounding box that contains both points so the route stays visible
-      const bounds = new google.maps.LatLngBounds();
-      bounds.extend(restaurantLocation); // the restaurant
-      bounds.extend(location);           // the waypoint on the route
-      map.fitBounds(bounds, 80);         // 80px padding so pins aren't at the edge
+      const allHoursHTML = place.weekday_text
+        ? place.weekday_text.map(function (line) {
+            return "<li>" + line + "</li>";
+          }).join("")
+        : "";
 
-      // Highlight the selected row and deselect siblings
-      const siblings = row.parentElement.querySelectorAll(".restaurant-option");
-      siblings.forEach(function (s) { s.classList.remove("selected"); });
-      row.classList.add("selected");
+      const row     = document.createElement("div");
+      row.className = "restaurant-option" + (i < restaurantsToShow.length - 1 ? " restaurant-option--divider" : "");
+      row.style.cursor = "pointer";
+      row.innerHTML = `
+        <div class="option-label">Option ${String.fromCharCode(65 + i)}</div>
+        <div class="restaurant-name">${name}</div>
+        <div class="restaurant-address">${address}</div>
+        <div class="restaurant-meta">
+          <span class="rating">★ ${rating}</span>
+          · <span class="distance-from-route">${distanceMiles} mi from your route</span>
+          ${todayHours ? "· <span class='today-hours'>Today: " + todayHours + "</span>" : ""}
+        </div>
+        ${allHoursHTML ? `
+          <details class="all-hours">
+            <summary>See all hours</summary>
+            <ul>${allHoursHTML}</ul>
+          </details>` : ""}
+        ${place.website ? `<a class="restaurant-website" href="${place.website}" target="_blank" rel="noopener">Visit website ↗</a>` : ""}
+      `;
+
+      const restaurantLocation = place.geometry.location;
+      row.addEventListener("click", function () {
+        addRestaurantMarker(restaurantLocation, name, number);
+        const bounds = new google.maps.LatLngBounds();
+        bounds.extend(restaurantLocation);
+        bounds.extend(location);
+        map.fitBounds(bounds, 80);
+        const siblings = row.parentElement.querySelectorAll(".restaurant-option");
+        siblings.forEach(function (s) { s.classList.remove("selected"); });
+        row.classList.add("selected");
+      });
+
+      optionsContainer.appendChild(row);
     });
+  }
 
-    li.appendChild(row);
-  });
+  renderOptions(places);
+
+  // Refresh link — only shown when the pool has more than 3 results to cycle through
+  if (pool && pool.length > 3) {
+    const refreshRow = document.createElement("div");
+    refreshRow.className = "refresh-options-row";
+
+    const refreshBtn = document.createElement("button");
+    refreshBtn.type      = "button";
+    refreshBtn.className = "refresh-options-btn";
+    refreshBtn.textContent = "Show different options";
+    refreshRow.appendChild(refreshBtn);
+    li.appendChild(refreshRow);
+
+    refreshBtn.addEventListener("click", function () {
+      refreshBtn.disabled    = true;
+      refreshBtn.textContent = "Loading…";
+
+      // Take the next 3 from the pool, wrapping around if we reach the end
+      const nextBatch = [];
+      for (let i = 0; i < 3; i++) {
+        nextBatch.push(pool[(poolOffset + i) % pool.length]);
+      }
+      poolOffset = (poolOffset + 3) % pool.length;
+
+      enrichWithHours(nextBatch, function (enriched) {
+        renderOptions(enriched);
+        refreshBtn.disabled    = false;
+        refreshBtn.textContent = "Show different options";
+      });
+    });
+  }
 
   stopsList.appendChild(li);
 

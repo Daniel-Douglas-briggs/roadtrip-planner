@@ -578,6 +578,34 @@ button#search-btn:disabled {
   margin-bottom: 14px;
 }
 
+/* "Show different options" refresh link below the three restaurant options */
+.refresh-options-row {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #ececec;
+  text-align: center;
+}
+
+.refresh-options-btn {
+  background: none;
+  border: none;
+  color: #aaa;
+  font-size: 0.78rem;
+  cursor: pointer;
+  padding: 0;
+}
+
+.refresh-options-btn:hover {
+  color: #2c5f2e;
+  text-decoration: underline;
+}
+
+.refresh-options-btn:disabled {
+  color: #ccc;
+  cursor: default;
+  text-decoration: none;
+}
+
 /* A stop card where no restaurant was found */
 .stop-card--empty .restaurant-name {
   color: #aaa;
