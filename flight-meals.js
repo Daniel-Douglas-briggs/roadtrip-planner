@@ -19,6 +19,11 @@
 let geocoder;
 let placesService;
 
+// Shared results map — one instance reused across searches
+let flightMap     = null;
+let flightMarkers = [];       // tracks all markers so we can clear them on re-search
+let flightBounds  = null;     // expands as each airport's results arrive
+
 
 // ── Called automatically by Google when the Maps API finishes loading ─────────
 
@@ -371,6 +376,7 @@ dietMenu.addEventListener("change", function () {
 // ── Elements ──────────────────────────────────────────────────────────────────
 
 const flightForm          = document.getElementById("flight-form");
+const flightMain          = document.getElementById("flight-main");
 const flightFormSection   = document.getElementById("flight-form-section");
 const flightResultSection = document.getElementById("flight-results-section");
 const flightSearchBtn     = document.getElementById("flight-search-btn");
@@ -546,9 +552,25 @@ flightSearchBtn.addEventListener("click", function () {
   flightResultsList.innerHTML = "";
   clearFlightError();
 
-  // Switch to step 2 immediately so the user sees loading states
-  flightFormSection.classList.add("hidden");
+  // Switch to step 2: hide the form panel, show the two-column results layout
+  flightMain.classList.add("hidden");
   flightResultSection.classList.remove("hidden");
+
+  // Reset the shared map for this search
+  flightBounds = new google.maps.LatLngBounds();
+  flightMarkers.forEach(function (m) { m.setMap(null); });
+  flightMarkers = [];
+
+  if (!flightMap) {
+    flightMap = new google.maps.Map(document.getElementById("flight-map"), {
+      center:           { lat: 39.5, lng: -98.35 }, // centre of the US until markers load
+      zoom:             4,
+      zoomControl:      true,
+      streetViewControl: false,
+      mapTypeControl:   false,
+      fullscreenControl: false,
+    });
+  }
 
   if (layovers.length === 0) {
     const empty = document.createElement("div");
@@ -583,7 +605,7 @@ function searchLayoversSequentially(layovers, index, dietQuery, selectedDiets) {
 
   const code = layovers[index];
   searchRestaurantsAtAirport(code, dietQuery, function (data) {
-    renderAirportCard(index, code, data.restaurants, selectedDiets, data.error);
+    renderAirportCard(index, code, data.restaurants, selectedDiets, data.error, data.location);
     searchLayoversSequentially(layovers, index + 1, dietQuery, selectedDiets);
   });
 }
@@ -599,7 +621,7 @@ function searchRestaurantsAtAirport(airportCode, dietQuery, callback) {
   // Step 1: convert the 3-letter code into GPS coordinates
   geocoder.geocode({ address: airportCode + " airport" }, function (geoResults, geoStatus) {
     if (geoStatus !== "OK" || !geoResults.length) {
-      callback({ restaurants: [], error: 'Could not locate airport "' + airportCode + '". Check the code and try again.' });
+      callback({ restaurants: [], location: null, error: 'Could not locate airport "' + airportCode + '". Check the code and try again.' });
       return;
     }
 
@@ -620,9 +642,9 @@ function searchRestaurantsAtAirport(airportCode, dietQuery, callback) {
       function (results, status) {
         if (status === google.maps.places.PlacesServiceStatus.OK && results.length > 0) {
           // Step 3: enrich the top 4 results with website links
-          enrichWithWebsite(results.slice(0, 4), callback);
+          enrichWithWebsite(results.slice(0, 4), airportLocation, callback);
         } else {
-          callback({ restaurants: [] });
+          callback({ restaurants: [], location: airportLocation });
         }
       }
     );
@@ -630,14 +652,14 @@ function searchRestaurantsAtAirport(airportCode, dietQuery, callback) {
 }
 
 // Fetches the website URL for each place via getDetails, then calls back
-// with { restaurants: [...enriched places] }
-function enrichWithWebsite(places, callback) {
+// with { restaurants: [...enriched places], location }
+function enrichWithWebsite(places, location, callback) {
   const enriched = [];
   let index = 0;
 
   function fetchNext() {
     if (index >= places.length) {
-      callback({ restaurants: enriched });
+      callback({ restaurants: enriched, location: location });
       return;
     }
 
@@ -661,7 +683,7 @@ function enrichWithWebsite(places, callback) {
 
 // ── Render one airport's results into its card ────────────────────────────────
 
-function renderAirportCard(cardIndex, code, restaurants, selectedDiets, error) {
+function renderAirportCard(cardIndex, code, restaurants, selectedDiets, error, location) {
   const card   = document.getElementById("airport-card-" + cardIndex);
   const loader = document.getElementById("airport-loading-" + cardIndex);
   if (!card) return;
@@ -681,6 +703,37 @@ function renderAirportCard(cardIndex, code, restaurants, selectedDiets, error) {
     empty.textContent = "No matching restaurants found at " + code + ". Try adjusting your dietary preferences.";
     card.appendChild(empty);
     return;
+  }
+
+  // ── Shared map: drop a pin for each restaurant ───────────────────────────
+  if (flightMap && location) {
+    flightBounds.extend(location);
+
+    restaurants.forEach(function (place) {
+      if (!place.geometry || !place.geometry.location) return;
+
+      const marker = new google.maps.Marker({
+        position: place.geometry.location,
+        map:      flightMap,
+        title:    place.name,
+      });
+
+      const infoWindow = new google.maps.InfoWindow({
+        content:
+          '<strong>' + place.name + '</strong>' +
+          (place.rating ? '<br>★ ' + place.rating.toFixed(1) : ''),
+      });
+
+      marker.addListener("click", function () {
+        infoWindow.open(flightMap, marker);
+      });
+
+      flightMarkers.push(marker);
+      flightBounds.extend(place.geometry.location);
+    });
+
+    // Fit the map to all markers collected so far
+    flightMap.fitBounds(flightBounds);
   }
 
   // If dietary preferences were selected, show them as tags above the results
@@ -724,7 +777,7 @@ function renderAirportCard(cardIndex, code, restaurants, selectedDiets, error) {
 
 flightBackBtn.addEventListener("click", function () {
   flightResultSection.classList.add("hidden");
-  flightFormSection.classList.remove("hidden");
+  flightMain.classList.remove("hidden");
 });
 
 

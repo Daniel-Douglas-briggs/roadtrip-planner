@@ -22,7 +22,7 @@
       <a href="flight-meals.html" class="nav-tab nav-tab--active">✈️ Flight Meals</a>
     </nav>
 
-    <main class="flight-main">
+    <main class="flight-main" id="flight-main">
 
       <!-- ── STEP 1: Flight route input form ──────────────────────────────── -->
       <section id="flight-form-section">
@@ -118,22 +118,29 @@
       </section>
 
 
-      <!-- ── STEP 2: Results grouped by airport ───────────────────────────── -->
-      <!-- Hidden until the user submits the form -->
-      <section id="flight-results-section" class="hidden">
+    </main>
 
-        <div class="flight-results-header">
-          <button type="button" id="flight-back-btn" class="flight-back-btn">← Back to search</button>
-          <!-- JavaScript fills in the route summary, e.g. "LAX → ORD → JFK" -->
-          <p id="flight-route-summary" class="flight-route-summary"></p>
-        </div>
+    <!-- ── STEP 2: Results — two-column layout (left: cards, right: map) ── -->
+    <!-- Hidden until the user submits the form -->
+    <section id="flight-results-section" class="hidden">
 
-        <!-- JavaScript generates one card per layover here -->
+      <div class="flight-results-header">
+        <button type="button" id="flight-back-btn" class="flight-back-btn">← Back to search</button>
+        <!-- JavaScript fills in the route summary, e.g. "LAX → ORD → JFK" -->
+        <p id="flight-route-summary" class="flight-route-summary"></p>
+      </div>
+
+      <div class="flight-results-body">
+        <!-- Left: one card per layover airport -->
         <div id="flight-results-list"></div>
 
-      </section>
+        <!-- Right: standalone map with a pin for every restaurant -->
+        <div id="flight-map-panel">
+          <div id="flight-map"></div>
+        </div>
+      </div>
 
-    </main>
+    </section>
 
     <!-- FOOTER -->
     <footer>

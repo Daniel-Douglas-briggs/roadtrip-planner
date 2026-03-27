@@ -1073,11 +1073,62 @@ button#search-btn:disabled {
   text-align: center;
 }
 
+/* ── Step 2 two-column layout ────────────────────────────────────────────── */
+
+/* The results section takes up all remaining body height */
+#flight-results-section {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Hidden state overrides the flex display */
+#flight-results-section.hidden {
+  display: none;
+}
+
+/* Header bar: back button + route summary — sits above both columns */
 .flight-results-header {
   display: flex;
   align-items: center;
   gap: 20px;
-  margin-bottom: 24px;
+  padding: 14px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+/* Body: left results list + right map panel */
+.flight-results-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+}
+
+/* Left column: scrollable list of airport cards */
+#flight-results-list {
+  width: 420px;
+  min-width: 300px;
+  overflow-y: auto;
+  padding: 20px 24px;
+  border-right: 1px solid #e5e7eb;
+}
+
+/* Right column: map fills the remaining width */
+#flight-map-panel {
+  flex: 1;
+  position: relative;
+}
+
+/* Map stretches to fill the panel completely */
+#flight-map {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
 }
 
 /* "← Back to search" link-style button */
