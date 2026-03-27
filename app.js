@@ -174,6 +174,17 @@ document.addEventListener("click", function (e) {
   }
 });
 
+// Collapsible dietary group sections (+ / − toggle)
+document.querySelectorAll(".diet-group-label").forEach(function (label) {
+  label.addEventListener("click", function () {
+    const options = label.nextElementSibling;
+    const btn     = label.querySelector(".diet-group-toggle");
+    const isOpen  = !options.classList.contains("collapsed");
+    options.classList.toggle("collapsed", isOpen);
+    btn.textContent = isOpen ? "+" : "−";
+  });
+});
+
 // Update the summary label whenever a checkbox changes
 dietMenu.addEventListener("change", function () {
   const checked = Array.from(dietMenu.querySelectorAll("input:checked"))
