@@ -48,8 +48,17 @@
             />
           </div>
 
-          <!-- Stop interval input -->
+          <!-- Stop planning mode toggle -->
           <div class="form-group">
+            <label>How would you like to plan stops?</label>
+            <div class="mode-toggle">
+              <button type="button" class="mode-btn mode-btn--active" id="mode-interval-btn">Stop Every (miles)</button>
+              <button type="button" class="mode-btn" id="mode-custom-btn">Add My Own Stops</button>
+            </div>
+          </div>
+
+          <!-- Interval input — visible when "Stop Every (miles)" is selected -->
+          <div class="form-group" id="interval-section">
             <label for="interval">Stop every (miles)</label>
             <input
               type="number"
@@ -58,6 +67,16 @@
               min="50"
               max="500"
             />
+          </div>
+
+          <!-- Custom stops — visible when "Add My Own Stops" is selected -->
+          <div class="form-group hidden" id="waypoints-section">
+            <label>Your stops</label>
+            <div class="waypoint-input-row">
+              <input type="text" id="waypoint-city-input" placeholder="e.g. Memphis, TN" />
+              <button type="button" id="add-waypoint-btn">Add</button>
+            </div>
+            <ul id="waypoints-list"></ul>
           </div>
 
           <!-- Dietary preferences multi-select dropdown -->

@@ -76,6 +76,76 @@ const resultBox = document.getElementById("results");
 const stopsList = document.getElementById("stops-list");
 const searchBtn = document.getElementById("search-btn");
 
+
+// ── Stop mode toggle ──────────────────────────────────────────────────────────
+// Tracks whether the user wants auto interval stops or their own custom cities.
+
+let currentMode    = "interval"; // "interval" or "custom"
+let customWaypoints = [];        // city strings the user has added in custom mode
+
+const modeIntervalBtn   = document.getElementById("mode-interval-btn");
+const modeCustomBtn     = document.getElementById("mode-custom-btn");
+const intervalSection   = document.getElementById("interval-section");
+const waypointsSection  = document.getElementById("waypoints-section");
+const waypointCityInput = document.getElementById("waypoint-city-input");
+const addWaypointBtn    = document.getElementById("add-waypoint-btn");
+const waypointsList     = document.getElementById("waypoints-list");
+
+modeIntervalBtn.addEventListener("click", function () {
+  currentMode = "interval";
+  modeIntervalBtn.classList.add("mode-btn--active");
+  modeCustomBtn.classList.remove("mode-btn--active");
+  intervalSection.classList.remove("hidden");
+  waypointsSection.classList.add("hidden");
+});
+
+modeCustomBtn.addEventListener("click", function () {
+  currentMode = "custom";
+  modeCustomBtn.classList.add("mode-btn--active");
+  modeIntervalBtn.classList.remove("mode-btn--active");
+  waypointsSection.classList.remove("hidden");
+  intervalSection.classList.add("hidden");
+});
+
+// Add a city to the list when the button is clicked …
+addWaypointBtn.addEventListener("click", function () {
+  const city = waypointCityInput.value.trim();
+  if (!city) return;
+  customWaypoints.push(city);
+  waypointCityInput.value = "";
+  renderWaypointsList();
+});
+
+// … or when the user presses Enter in the input field
+waypointCityInput.addEventListener("keydown", function (e) {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    addWaypointBtn.click();
+  }
+});
+
+// Re-draw the list every time a city is added or removed
+function renderWaypointsList() {
+  waypointsList.innerHTML = "";
+  customWaypoints.forEach(function (city, i) {
+    const li = document.createElement("li");
+    li.className = "waypoint-item";
+    li.innerHTML =
+      city +
+      ' <button type="button" class="waypoint-remove-btn" data-index="' + i + '">×</button>';
+    waypointsList.appendChild(li);
+  });
+}
+
+// Remove a city when its × button is clicked
+waypointsList.addEventListener("click", function (e) {
+  if (e.target.classList.contains("waypoint-remove-btn")) {
+    const index = parseInt(e.target.getAttribute("data-index"), 10);
+    customWaypoints.splice(index, 1);
+    renderWaypointsList();
+  }
+});
+
 // ── Dietary preference checkboxes ────────────────────────────────────────────
 // Dropdown toggle — clicking the bar opens/closes the checkbox list.
 
@@ -123,36 +193,46 @@ dietMenu.addEventListener("change", function () {
 // tries to submit the form or reload the page — no preventDefault needed.
 
 searchBtn.addEventListener("click", function () {
-  // Read values from each input field
-  const start    = document.getElementById("start").value.trim();
-  const end      = document.getElementById("end").value.trim();
-  const interval = parseInt(document.getElementById("interval").value, 10);
+  const start = document.getElementById("start").value.trim();
+  const end   = document.getElementById("end").value.trim();
 
-  // Collect every checked option into an array, then join into one search string
+  // Collect every checked dietary option into one search string
   // e.g. ["gluten free", "vegan"] → "gluten free vegan"
   const checkedDiets = Array.from(
     dietMenu.querySelectorAll("input:checked")
   ).map(function (cb) { return cb.value; });
   const diet = checkedDiets.join(" ");
 
-  // Validate — tell the user if something is missing
   if (!start || !end) {
     showError("Please enter both a starting city and a destination.");
     return;
   }
-  if (!interval || interval < 50) {
-    showError("Please enter a stop interval of at least 50 miles.");
-    return;
+
+  if (currentMode === "interval") {
+    // ── Interval mode ──────────────────────────────────────────────────────
+    const interval = parseInt(document.getElementById("interval").value, 10);
+    if (!interval || interval < 50) {
+      showError("Please enter a stop interval of at least 50 miles.");
+      return;
+    }
+    clearResults();
+    clearMarkers();
+    clearRestaurantMarkers();
+    showLoading();
+    planRoute(start, end, interval, diet);
+
+  } else {
+    // ── Custom stops mode ──────────────────────────────────────────────────
+    if (customWaypoints.length === 0) {
+      showError("Please add at least one stop before searching.");
+      return;
+    }
+    clearResults();
+    clearMarkers();
+    clearRestaurantMarkers();
+    showLoading();
+    planRouteWithWaypoints(start, end, customWaypoints, diet);
   }
-
-  // Clear old results and markers, show loading state
-  clearResults();
-  clearMarkers();
-  clearRestaurantMarkers();
-  showLoading();
-
-  // Hand off to the route planner
-  planRoute(start, end, interval, diet);
 });
 
 
@@ -204,6 +284,54 @@ function planRoute(start, end, intervalMiles, diet) {
       }
 
       // Search for restaurants at each waypoint
+      searchAllWaypoints(waypoints, diet, totalMiles);
+    }
+  );
+}
+
+
+// ── Step 3b: plan a route through user-specified cities ───────────────────────
+// Used when the user is in "Add My Own Stops" mode.
+// Instead of calculating stops every N miles, we pass the user's cities
+// directly to the Directions API as waypoints and search for restaurants there.
+
+function planRouteWithWaypoints(start, end, stopCities, diet) {
+  directionsService.route(
+    {
+      origin:      start,
+      destination: end,
+      waypoints:   stopCities.map(function (city) {
+        return { location: city, stopover: true };
+      }),
+      travelMode: google.maps.TravelMode.DRIVING,
+    },
+    function (result, status) {
+      if (status !== "OK") {
+        resetButton();
+        showError(
+          "Could not find a route between those cities. " +
+          "Please check the city names and try again."
+        );
+        return;
+      }
+
+      directionsRenderer.setDirections(result);
+
+      const route       = result.routes[0];
+      const totalMeters = route.legs.reduce(function (sum, leg) {
+        return sum + leg.distance.value;
+      }, 0);
+      const totalMiles = Math.round(totalMeters / 1609.34);
+
+      // Each leg ends at one of the user's waypoint cities.
+      // We skip the last leg because it ends at the destination, not a stop.
+      const waypoints = route.legs.slice(0, -1).map(function (leg) {
+        return {
+          point:        leg.end_location,
+          windowPoints: [leg.end_location],
+        };
+      });
+
       searchAllWaypoints(waypoints, diet, totalMiles);
     }
   );

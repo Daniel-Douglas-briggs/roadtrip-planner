@@ -206,6 +206,102 @@ input[type="number"]:focus {
   flex-shrink: 0;
 }
 
+/* ── Stop mode toggle ──────────────────────────────────────────────────────── */
+
+/* The two-button selector that switches between interval and custom mode */
+.mode-toggle {
+  display: flex;
+  border: 1.5px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.mode-btn {
+  flex: 1;
+  padding: 10px 12px;
+  background: white;
+  border: none;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #888;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  text-align: center;
+}
+
+/* Divider between the two buttons */
+.mode-btn:first-child {
+  border-right: 1.5px solid #ddd;
+}
+
+/* The currently selected mode */
+.mode-btn--active {
+  background: #2c5f2e;
+  color: white;
+}
+
+.mode-btn:not(.mode-btn--active):hover {
+  background: #f3f7f3;
+  color: #333;
+}
+
+/* ── Custom waypoints input (shown in "Add My Own Stops" mode) ─────────────── */
+
+.waypoint-input-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.waypoint-input-row button {
+  padding: 9px 16px;
+  background: #2c5f2e;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+
+.waypoint-input-row button:hover {
+  background: #1e4420;
+}
+
+/* The list of cities the user has added */
+#waypoints-list {
+  list-style: none;
+}
+
+.waypoint-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  background: #f3f7f3;
+  border-radius: 6px;
+  margin-bottom: 6px;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+/* The × remove button on each waypoint */
+.waypoint-remove-btn {
+  background: none;
+  border: none;
+  color: #aaa;
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 0 2px;
+  cursor: pointer;
+}
+
+.waypoint-remove-btn:hover {
+  color: #c0392b;
+}
+
 button#search-btn {
   width: 100%;
   padding: 12px;
