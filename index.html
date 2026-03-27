@@ -17,6 +17,12 @@
       <p>Find dietary-friendly restaurant stops along your route</p>
     </header>
 
+    <!-- NAV: tab bar linking to each section of the app -->
+    <nav class="app-nav">
+      <a href="index.html" class="nav-tab nav-tab--active">🗺️ Road Trip</a>
+      <a href="flight-meals.html" class="nav-tab">✈️ Flight Meals</a>
+    </nav>
+
     <!-- MAIN CONTENT: split into left panel (form) and right panel (map) -->
     <main>
 
@@ -89,6 +95,7 @@
               </button>
               <div class="diet-options-list" id="diet-dropdown-menu" hidden>
                 <div class="diet-group-label">Lifestyle Diets</div>
+                <label class="diet-option"><input type="checkbox" value="high protein"> High Protein</label>
                 <label class="diet-option"><input type="checkbox" value="keto"> Keto</label>
                 <label class="diet-option"><input type="checkbox" value="low carb"> Low Carb</label>
                 <label class="diet-option"><input type="checkbox" value="paleo"> Paleo</label>

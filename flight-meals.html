@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Flight Meals — Route Bites</title>
+
+    <link rel="stylesheet" href="style.css" />
+  </head>
+
+  <body class="flight-page">
+
+    <!-- HEADER -->
+    <header>
+      <h1>🗺️ Road Trip Planner</h1>
+      <p>Find dietary-friendly restaurant stops along your route</p>
+    </header>
+
+    <!-- NAV: tab bar — Flight Meals is the active tab on this page -->
+    <nav class="app-nav">
+      <a href="index.html" class="nav-tab">🗺️ Road Trip</a>
+      <a href="flight-meals.html" class="nav-tab nav-tab--active">✈️ Flight Meals</a>
+    </nav>
+
+    <main class="flight-main">
+
+      <!-- ── STEP 1: Flight route input form ──────────────────────────────── -->
+      <section id="flight-form-section">
+
+        <div class="flight-card">
+
+          <h2>Plan Your Flight Meals</h2>
+          <p class="flight-card-hint">Enter your route and any layover airports to find food options at each stop.</p>
+
+          <form id="flight-form">
+
+            <!-- Departure and arrival side by side -->
+            <div class="airport-row">
+              <div class="form-group">
+                <label for="departure">Departure</label>
+                <input
+                  class="airport-input"
+                  type="text"
+                  id="departure"
+                  maxlength="3"
+                  placeholder="LAX"
+                />
+              </div>
+              <div class="airport-arrow">→</div>
+              <div class="form-group">
+                <label for="arrival">Arrival</label>
+                <input
+                  class="airport-input"
+                  type="text"
+                  id="arrival"
+                  maxlength="3"
+                  placeholder="JFK"
+                />
+              </div>
+            </div>
+
+            <!-- Layover airports (0–3, added dynamically) -->
+            <div class="form-group" id="layovers-section">
+              <label>Layover Airports <span class="label-optional">(optional, up to 3)</span></label>
+
+              <!-- JavaScript adds layover rows here -->
+              <ul id="layovers-list"></ul>
+
+              <button type="button" id="add-layover-btn" class="add-layover-btn">
+                + Add layover
+              </button>
+            </div>
+
+            <!-- Dietary preferences — same options as the road trip page -->
+            <div class="form-group">
+              <label>Dietary Preferences</label>
+              <div class="diet-dropdown" id="diet-dropdown">
+                <button type="button" class="diet-toggle" id="diet-toggle-btn">
+                  <span id="diet-toggle-label">None selected</span>
+                  <span class="diet-toggle-arrow">▾</span>
+                </button>
+                <div class="diet-options-list" id="diet-dropdown-menu" hidden>
+                  <div class="diet-group-label">Lifestyle Diets</div>
+                  <label class="diet-option"><input type="checkbox" value="high protein"> High Protein</label>
+                  <label class="diet-option"><input type="checkbox" value="keto"> Keto</label>
+                  <label class="diet-option"><input type="checkbox" value="low carb"> Low Carb</label>
+                  <label class="diet-option"><input type="checkbox" value="paleo"> Paleo</label>
+                  <label class="diet-option"><input type="checkbox" value="carnivore"> Carnivore</label>
+                  <label class="diet-option"><input type="checkbox" value="whole30"> Whole30</label>
+                  <label class="diet-option"><input type="checkbox" value="mediterranean"> Mediterranean</label>
+                  <label class="diet-option"><input type="checkbox" value="vegan"> Vegan</label>
+                  <label class="diet-option"><input type="checkbox" value="vegetarian"> Vegetarian</label>
+                  <div class="diet-group-label">Allergies &amp; Restrictions</div>
+                  <label class="diet-option"><input type="checkbox" value="gluten free"> Gluten Free</label>
+                  <label class="diet-option"><input type="checkbox" value="dairy free"> Dairy Free</label>
+                  <label class="diet-option"><input type="checkbox" value="nut free"> Nut Free</label>
+                  <label class="diet-option"><input type="checkbox" value="halal"> Halal</label>
+                  <label class="diet-option"><input type="checkbox" value="kosher"> Kosher</label>
+                </div>
+              </div>
+            </div>
+
+            <button type="button" id="flight-search-btn">Find Meal Options</button>
+
+          </form>
+
+        </div>
+
+      </section>
+
+
+      <!-- ── STEP 2: Results grouped by airport ───────────────────────────── -->
+      <!-- Hidden until the user submits the form -->
+      <section id="flight-results-section" class="hidden">
+
+        <div class="flight-results-header">
+          <button type="button" id="flight-back-btn" class="flight-back-btn">← Back to search</button>
+          <!-- JavaScript fills in the route summary, e.g. "LAX → ORD → JFK" -->
+          <p id="flight-route-summary" class="flight-route-summary"></p>
+        </div>
+
+        <!-- JavaScript generates one card per layover here -->
+        <div id="flight-results-list"></div>
+
+      </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer>
+      <p>Built with Google Maps &amp; Places API</p>
+    </footer>
+
+    <script src="flight-meals.js"></script>
+
+  </body>
+</html>
