@@ -34,28 +34,30 @@
 
           <form id="flight-form">
 
-            <!-- Departure and arrival side by side -->
+            <!-- Departure and arrival side by side.
+                 Each input has a hidden dropdown beneath it that shows
+                 matching airports as the user types a city name or code. -->
             <div class="airport-row">
               <div class="form-group">
                 <label for="departure">Departure</label>
                 <input
-                  class="airport-input"
                   type="text"
                   id="departure"
-                  maxlength="3"
-                  placeholder="LAX"
+                  placeholder="City or code (e.g. Chicago)"
+                  autocomplete="off"
                 />
+                <ul class="airport-dropdown hidden" id="departure-dropdown"></ul>
               </div>
               <div class="airport-arrow">→</div>
               <div class="form-group">
                 <label for="arrival">Arrival</label>
                 <input
-                  class="airport-input"
                   type="text"
                   id="arrival"
-                  maxlength="3"
-                  placeholder="JFK"
+                  placeholder="City or code (e.g. New York)"
+                  autocomplete="off"
                 />
+                <ul class="airport-dropdown hidden" id="arrival-dropdown"></ul>
               </div>
             </div>
 
@@ -65,6 +67,13 @@
 
               <!-- JavaScript adds layover rows here -->
               <ul id="layovers-list"></ul>
+
+              <!-- Suggested connecting airports — shown when both departure and
+                   arrival codes are recognised. JavaScript builds this section. -->
+              <div id="layover-suggestions" class="hidden">
+                <p class="suggestions-label">Suggested connecting airports:</p>
+                <div id="suggestions-chips"></div>
+              </div>
 
               <button type="button" id="add-layover-btn" class="add-layover-btn">
                 + Add layover
@@ -131,7 +140,23 @@
       <p>Built with Google Maps &amp; Places API</p>
     </footer>
 
+    <!-- flight-meals.js must load BEFORE the Maps API so initFlightMeals()
+         is defined in time for Google to call it -->
     <script src="flight-meals.js"></script>
+
+    <!-- Google Maps API — same key as the road trip page.
+         "callback=initFlightMeals" tells Google to call our setup function
+         once it finishes loading. We only need "places" here (no geometry). -->
+    <script
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBx0ahH5VeUgK4C6GJsDWUU2suNAHTFPiw&libraries=places&callback=initFlightMeals"
+      async
+      defer
+      onerror="showFlightApiError()"
+    ></script>
+
+    <!-- PlacesService needs a DOM element to attach to.
+         This hidden div fills that role without appearing on screen. -->
+    <div id="places-service-target" hidden></div>
 
   </body>
 </html>

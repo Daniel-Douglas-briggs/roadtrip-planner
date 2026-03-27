@@ -322,6 +322,66 @@ input[type="number"]:focus {
   color: #333;
 }
 
+/* ── Suggested layover airports ────────────────────────────────────────────── */
+
+/* Container that holds the label + chip row */
+#layover-suggestions {
+  margin-bottom: 10px;
+}
+
+.suggestions-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+
+/* Wrapping row of airport chips */
+#suggestions-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+/* Each clickable airport suggestion */
+.suggestion-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  background: white;
+  border: 1.5px solid #c4ddc4;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.suggestion-chip:hover:not(:disabled) {
+  background: #f3f7f3;
+  border-color: #2c5f2e;
+}
+
+.suggestion-chip:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* Airport code — bold green */
+.chip-code {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #2c5f2e;
+  letter-spacing: 0.04em;
+}
+
+/* City name — grey */
+.chip-name {
+  font-size: 0.78rem;
+  color: #777;
+}
+
 /* The × remove button on each waypoint */
 .waypoint-remove-btn {
   background: none;
@@ -721,16 +781,20 @@ button#search-btn:disabled {
    the road-trip layout (which locks to 100vh with no scroll).
    ============================================= */
 
-/* Allow the flight meals page to scroll if content is tall */
+/* Keep the body locked — header and nav stay pinned at the top */
 .flight-page {
-  overflow: auto;
+  overflow: hidden;
 }
 
-/* Centered content column — no map panel on this page */
+/* Centered content column — fills the remaining height and scrolls internally,
+   so the header and nav tabs stay visible while the form scrolls */
 .flight-main {
+  flex: 1;           /* grow to fill the space between the nav and footer */
+  min-height: 0;     /* lets flex children shrink below their natural height */
+  overflow-y: auto;  /* scroll the form content when it's taller than the window */
   max-width: 640px;
-  margin: 40px auto;
-  padding: 0 24px 60px;
+  margin: 0 auto;
+  padding: 40px 24px 60px;
   width: 100%;
 }
 
@@ -753,6 +817,61 @@ button#search-btn:disabled {
   color: #888;
   margin-bottom: 24px;
   line-height: 1.5;
+}
+
+/* ── Airport code typeahead dropdown ───────────────────────────────────────── */
+
+/* form-group needs relative positioning so the dropdown sits directly below its input */
+.airport-row .form-group {
+  position: relative;
+}
+
+/* The dropdown list that appears below the departure/arrival inputs */
+.airport-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1.5px solid #2c5f2e;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  list-style: none;
+  z-index: 200;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+/* One result row per matching airport */
+.airport-dropdown-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.airport-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.airport-dropdown-item:hover {
+  background: #f3f7f3;
+}
+
+/* The bold 3-letter code shown on the first line */
+.dropdown-code {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #2c5f2e;
+  letter-spacing: 0.06em;
+}
+
+/* "City · Full Airport Name" shown on the second line */
+.dropdown-info {
+  font-size: 0.78rem;
+  color: #888;
 }
 
 /* Departure and arrival inputs sit side by side with an arrow between them */
@@ -880,6 +999,79 @@ button#search-btn:disabled {
 }
 
 /* ── Step 2: Results ───────────────────────────────────────────────────────── */
+
+/* "Filtered for: [Keto] [Gluten Free]" row that appears at the top of each card */
+.flight-filter-row {
+  font-size: 0.8rem;
+  color: #888;
+  margin-bottom: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Each selected dietary preference shown as a small green pill */
+.diet-tag {
+  display: inline-block;
+  background: #e8f2e8;
+  color: #2c5f2e;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 20px;
+  border: 1px solid #c4ddc4;
+}
+
+/* One restaurant row inside an airport card */
+.flight-restaurant-item {
+  padding: 12px 0;
+}
+
+/* Thin line between restaurant rows */
+.flight-restaurant-item--divider {
+  border-bottom: 1px solid #ececec;
+  padding-bottom: 12px;
+  margin-bottom: 2px;
+}
+
+/* Name and star rating on the same line */
+.flight-restaurant-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 3px;
+}
+
+.flight-restaurant-name {
+  font-size: 0.97rem;
+  font-weight: 600;
+  color: #222;
+}
+
+.flight-restaurant-rating {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #f4a261;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Cuisine type shown in small grey text below the name */
+.flight-cuisine-type {
+  font-size: 0.82rem;
+  color: #888;
+  margin-bottom: 5px;
+}
+
+/* Loading state shown while the API call is in progress */
+.flight-airport-loading {
+  font-size: 0.88rem;
+  color: #888;
+  padding: 16px;
+  text-align: center;
+}
 
 .flight-results-header {
   display: flex;
