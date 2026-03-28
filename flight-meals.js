@@ -23,6 +23,7 @@ let placesService;
 let flightMap     = null;
 let flightMarkers = [];       // tracks all markers so we can clear them on re-search
 let flightBounds  = null;     // expands as each airport's results arrive
+let currentMode   = "airport"; // "airport" | "route" — which tab is active
 
 
 // ── Called automatically by Google when the Maps API finishes loading ─────────
@@ -529,14 +530,93 @@ function setupAirportField(inputId, dropdownId) {
   });
 }
 
-// Wire up both fields
-setupAirportField("departure", "departure-dropdown");
-setupAirportField("arrival",   "arrival-dropdown");
+// Wire up all three typeahead fields
+setupAirportField("departure",          "departure-dropdown");
+setupAirportField("arrival",            "arrival-dropdown");
+setupAirportField("airport-quick-input","airport-quick-dropdown");
+
+
+// ── Mode tab switching ────────────────────────────────────────────────────────
+
+const tabAirport = document.getElementById("tab-airport");
+const tabRoute   = document.getElementById("tab-route");
+const flightCard = document.querySelector(".flight-card");
+
+// Switching modes: toggle one class on the card — CSS handles what's visible.
+tabAirport.addEventListener("click", function () {
+  flightCard.classList.replace("mode-route", "mode-airport");
+  tabAirport.classList.add("mode-tab--active");
+  tabRoute.classList.remove("mode-tab--active");
+});
+
+tabRoute.addEventListener("click", function () {
+  flightCard.classList.replace("mode-airport", "mode-route");
+  tabRoute.classList.add("mode-tab--active");
+  tabAirport.classList.remove("mode-tab--active");
+});
 
 
 // ── Step 1 → Step 2: search and show results ──────────────────────────────────
 
 flightSearchBtn.addEventListener("click", function () {
+  clearFlightError();
+
+  // ── Shared: collect dietary preferences ──────────────────────────────────
+  const selectedDiets = Array.from(dietMenu.querySelectorAll("input:checked"))
+    .map(function (cb) { return cb.value; });
+  const dietQuery = selectedDiets.join(" ");
+
+  // ── Airport mode: search a single airport directly ────────────────────────
+  if (document.querySelector(".flight-card").classList.contains("mode-airport")) {
+    const rawInput = document.getElementById("airport-quick-input").value.trim();
+    if (!rawInput) {
+      showFlightError("Please enter an airport name or code.");
+      return;
+    }
+
+    const airportCode  = rawInput.toUpperCase();
+    const knownAirport = AIRPORTS[airportCode];
+
+    flightRouteSummary.textContent = knownAirport
+      ? airportCode + " — " + knownAirport.name
+      : rawInput;
+
+    flightResultsList.innerHTML = "";
+    flightMain.classList.add("hidden");
+    flightResultSection.classList.remove("hidden");
+
+    flightBounds = new google.maps.LatLngBounds();
+    flightMarkers.forEach(function (m) { m.setMap(null); });
+    flightMarkers = [];
+
+    if (!flightMap) {
+      flightMap = new google.maps.Map(document.getElementById("flight-map"), {
+        center: { lat: 39.5, lng: -98.35 },
+        zoom: 4,
+        zoomControl: true,
+        streetViewControl: false,
+        mapTypeControl: false,
+        fullscreenControl: false,
+      });
+    }
+
+    const card = document.createElement("div");
+    card.className = "flight-airport-card";
+    card.id = "airport-card-0";
+    card.innerHTML =
+      '<div class="flight-airport-header">' +
+        '<span class="flight-airport-code">' + (knownAirport ? airportCode : rawInput) + '</span>' +
+      '</div>' +
+      '<div class="flight-airport-loading" id="airport-loading-0">🔍 Finding restaurants…</div>';
+    flightResultsList.appendChild(card);
+
+    searchRestaurantsAtAirport(airportCode, dietQuery, function (data) {
+      renderAirportCard(0, airportCode, data.restaurants, selectedDiets, data.error, data.location);
+    });
+    return;
+  }
+
+  // ── Route mode: existing departure / arrival / layover logic ──────────────
   const departure = document.getElementById("departure").value.trim().toUpperCase();
   const arrival   = document.getElementById("arrival").value.trim().toUpperCase();
 
@@ -551,17 +631,11 @@ flightSearchBtn.addEventListener("click", function () {
     .map(function (input) { return input.value.trim().toUpperCase(); })
     .filter(function (code) { return code.length > 0; });
 
-  // Collect selected dietary preferences
-  const selectedDiets = Array.from(dietMenu.querySelectorAll("input:checked"))
-    .map(function (cb) { return cb.value; });
-  const dietQuery = selectedDiets.join(" ");
-
   // Build route summary: "LAX  →  ORD  →  JFK"
   const allAirports = [departure].concat(layovers).concat([arrival]);
   flightRouteSummary.textContent = allAirports.join("  →  ");
 
   flightResultsList.innerHTML = "";
-  clearFlightError();
 
   // Switch to step 2: hide the form panel, show the two-column results layout
   flightMain.classList.add("hidden");
@@ -676,10 +750,12 @@ function enrichWithWebsite(places, location, callback) {
 
     const place = places[index];
     placesService.getDetails(
-      { placeId: place.place_id, fields: ["website"] },
+      { placeId: place.place_id, fields: ["website", "opening_hours", "formatted_address"] },
       function (details, status) {
-        if (status === google.maps.places.PlacesServiceStatus.OK && details.website) {
-          place.website = details.website;
+        if (status === google.maps.places.PlacesServiceStatus.OK && details) {
+          if (details.website)         place.website         = details.website;
+          if (details.opening_hours)   place.opening_hours   = details.opening_hours;
+          if (details.formatted_address) place.formatted_address = details.formatted_address;
         }
         enriched.push(place);
         index++;
@@ -689,6 +765,33 @@ function enrichWithWebsite(places, location, callback) {
   }
 
   fetchNext();
+}
+
+
+// ── Terminal / gate parser ────────────────────────────────────────────────────
+// Scans a place's formatted_address for mentions of a terminal or gate number.
+// Google Places doesn't return a dedicated terminal field, but airport
+// restaurants often have it embedded in their address, e.g.
+//   "Terminal B, O'Hare International Airport, ..."
+//   "Concourse C, Gate 12, Hartsfield-Jackson Atlanta International, ..."
+// Returns { terminal: "Terminal B" | null, gate: "Near Gate 12" | null }
+
+function parseTerminalInfo(address) {
+  if (!address) return { terminal: null, gate: null };
+
+  var termMatch      = address.match(/terminal\s+([a-z0-9]+)/i);
+  var concourseMatch = address.match(/concourse\s+([a-z0-9]+)/i);
+  var gateMatch      = address.match(/\bgate\s+([a-z0-9]+)/i);
+
+  var terminal = termMatch
+    ? "Terminal " + termMatch[1].toUpperCase()
+    : concourseMatch
+      ? "Concourse " + concourseMatch[1].toUpperCase()
+      : null;
+
+  var gate = gateMatch ? "Near Gate " + gateMatch[1].toUpperCase() : null;
+
+  return { terminal: terminal, gate: gate };
 }
 
 
@@ -765,6 +868,14 @@ function renderAirportCard(cardIndex, code, restaurants, selectedDiets, error, l
     const rating  = place.rating ? place.rating.toFixed(1) : null;
     const cuisine = getCuisineLabel(place.types || []);
 
+    // Terminal / gate — parsed from the formatted_address Google returned
+    const loc      = parseTerminalInfo(place.formatted_address || "");
+    const hasLoc   = loc.terminal || loc.gate;
+
+    // Opening hours — weekday_text is an array like ["Monday: 6:00 AM – 10:00 PM", ...]
+    const hoursText = place.opening_hours && place.opening_hours.weekday_text;
+    const hasHours  = hoursText && hoursText.length > 0;
+
     const item = document.createElement("div");
     item.className = "flight-restaurant-item" +
       (i < restaurants.length - 1 ? " flight-restaurant-item--divider" : "");
@@ -775,11 +886,45 @@ function renderAirportCard(cardIndex, code, restaurants, selectedDiets, error, l
         (rating ? '<span class="flight-restaurant-rating">★ ' + rating + '</span>' : '') +
       '</div>' +
       (cuisine ? '<div class="flight-cuisine-type">' + cuisine + '</div>' : '') +
+
+      // Terminal and gate location line (only shown when available)
+      (hasLoc
+        ? '<div class="flight-location-info">' +
+            (loc.terminal ? '<span class="flight-terminal">📍 ' + loc.terminal + '</span>' : '') +
+            (loc.gate     ? '<span class="flight-gate">'     + loc.gate     + '</span>' : '') +
+          '</div>'
+        : '') +
+
+      // Collapsible hours section
+      (hasHours
+        ? '<div class="flight-hours-section">' +
+            '<button type="button" class="flight-hours-toggle">' +
+              'Hours <span class="flight-hours-arrow">▾</span>' +
+            '</button>' +
+            '<ul class="flight-hours-list hidden">' +
+              hoursText.map(function (h) { return '<li>' + h + '</li>'; }).join('') +
+            '</ul>' +
+          '</div>'
+        : '') +
+
       (place.website
         ? '<a class="restaurant-website" href="' + place.website + '" target="_blank" rel="noopener">Visit website ↗</a>'
         : '');
 
     card.appendChild(item);
+
+    // Wire up the hours toggle click handler after the element is in the DOM
+    if (hasHours) {
+      const toggleBtn  = item.querySelector('.flight-hours-toggle');
+      const hoursList  = item.querySelector('.flight-hours-list');
+      const arrowSpan  = item.querySelector('.flight-hours-arrow');
+
+      toggleBtn.addEventListener('click', function () {
+        const isOpen = !hoursList.classList.contains('hidden');
+        hoursList.classList.toggle('hidden', isOpen);
+        arrowSpan.textContent = isOpen ? '▾' : '▴';
+      });
+    }
   });
 }
 

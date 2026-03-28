@@ -826,6 +826,45 @@ button#search-btn:disabled {
   padding: 32px;
 }
 
+/* Mode field visibility — driven by a class on the parent card.
+   Only one mode div is visible at a time; CSS handles it entirely. */
+#airport-mode-fields { display: none; }
+#route-mode-fields   { display: none; }
+.flight-card.mode-airport #airport-mode-fields { display: block; }
+.flight-card.mode-route   #route-mode-fields   { display: block; }
+
+/* Mode toggle tabs at the top of the card */
+.search-mode-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 24px;
+  border-bottom: 2px solid #ececec;
+  padding-bottom: 0;
+}
+
+.mode-tab {
+  background: none;
+  border: none;
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #888;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px; /* sits flush with the container border-bottom */
+  border-radius: 4px 4px 0 0;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.mode-tab:hover {
+  color: #444;
+}
+
+.mode-tab--active {
+  color: #2c5f2e;
+  border-bottom-color: #2c5f2e;
+}
+
 .flight-card h2 {
   font-size: 1.3rem;
   color: #2c5f2e;
@@ -842,7 +881,7 @@ button#search-btn:disabled {
 /* ── Airport code typeahead dropdown ───────────────────────────────────────── */
 
 /* form-group needs relative positioning so the dropdown sits directly below its input */
-.airport-row .form-group {
+.form-group {
   position: relative;
 }
 
@@ -1083,6 +1122,63 @@ button#search-btn:disabled {
   font-size: 0.82rem;
   color: #888;
   margin-bottom: 5px;
+}
+
+/* Terminal / gate location line */
+.flight-location-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 0.82rem;
+  margin-bottom: 6px;
+}
+
+.flight-terminal {
+  color: #555;
+}
+
+.flight-gate {
+  color: #555;
+}
+
+/* Collapsible hours section */
+.flight-hours-section {
+  margin-bottom: 6px;
+}
+
+.flight-hours-toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.82rem;
+  color: #3a7bd5;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.flight-hours-toggle:hover {
+  text-decoration: underline;
+}
+
+.flight-hours-arrow {
+  font-size: 0.75rem;
+}
+
+.flight-hours-list {
+  list-style: none;
+  margin: 6px 0 0 0;
+  padding: 8px 10px;
+  background: #f8f8f8;
+  border-radius: 6px;
+  font-size: 0.80rem;
+  color: #555;
+  line-height: 1.7;
+}
+
+.flight-hours-list.hidden {
+  display: none;
 }
 
 /* Loading state shown while the API call is in progress */

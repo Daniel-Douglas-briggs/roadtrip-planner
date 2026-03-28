@@ -27,60 +27,75 @@
       <!-- ── STEP 1: Flight route input form ──────────────────────────────── -->
       <section id="flight-form-section">
 
-        <div class="flight-card">
+        <div class="flight-card mode-airport">
 
-          <h2>Plan Your Flight Meals</h2>
-          <p class="flight-card-hint">Enter your route and any layover airports to find food options at each stop.</p>
+          <!-- Mode toggle tabs -->
+          <div class="search-mode-tabs">
+            <button type="button" class="mode-tab mode-tab--active" id="tab-airport">🔍 Single Airport</button>
+            <button type="button" class="mode-tab" id="tab-route">✈️ Flight Route</button>
+          </div>
 
           <form id="flight-form">
 
-            <!-- Departure and arrival side by side.
-                 Each input has a hidden dropdown beneath it that shows
-                 matching airports as the user types a city name or code. -->
-            <div class="airport-row">
+            <!-- ── AIRPORT MODE: just one airport input ──────────────────────── -->
+            <div id="airport-mode-fields">
+              <h2>Find Airport Restaurants</h2>
+              <p class="flight-card-hint">Enter any airport to browse food options there.</p>
               <div class="form-group">
-                <label for="departure">Departure</label>
+                <label for="airport-quick-input">Airport</label>
                 <input
                   type="text"
-                  id="departure"
-                  placeholder="City or code (e.g. Chicago)"
+                  id="airport-quick-input"
+                  placeholder="City or code (e.g. Chicago or ORD)"
                   autocomplete="off"
                 />
-                <ul class="airport-dropdown hidden" id="departure-dropdown"></ul>
-              </div>
-              <div class="airport-arrow">→</div>
-              <div class="form-group">
-                <label for="arrival">Arrival</label>
-                <input
-                  type="text"
-                  id="arrival"
-                  placeholder="City or code (e.g. New York)"
-                  autocomplete="off"
-                />
-                <ul class="airport-dropdown hidden" id="arrival-dropdown"></ul>
+                <ul class="airport-dropdown hidden" id="airport-quick-dropdown"></ul>
               </div>
             </div>
 
-            <!-- Layover airports (0–3, added dynamically) -->
-            <div class="form-group" id="layovers-section">
-              <label>Layover Airports <span class="label-optional">(optional, up to 3)</span></label>
+            <!-- ── ROUTE MODE: departure, arrival, layovers ──────────────────── -->
+            <div id="route-mode-fields">
+              <h2>Plan Your Flight Meals</h2>
+              <p class="flight-card-hint">Enter your route and any layover airports to find food options at each stop.</p>
 
-              <!-- JavaScript adds layover rows here -->
-              <ul id="layovers-list"></ul>
-
-              <!-- Suggested connecting airports — shown when both departure and
-                   arrival codes are recognised. JavaScript builds this section. -->
-              <div id="layover-suggestions" class="hidden">
-                <p class="suggestions-label">Suggested connecting airports:</p>
-                <div id="suggestions-chips"></div>
+              <div class="airport-row">
+                <div class="form-group">
+                  <label for="departure">Departure</label>
+                  <input
+                    type="text"
+                    id="departure"
+                    placeholder="City or code (e.g. Chicago)"
+                    autocomplete="off"
+                  />
+                  <ul class="airport-dropdown hidden" id="departure-dropdown"></ul>
+                </div>
+                <div class="airport-arrow">→</div>
+                <div class="form-group">
+                  <label for="arrival">Arrival</label>
+                  <input
+                    type="text"
+                    id="arrival"
+                    placeholder="City or code (e.g. New York)"
+                    autocomplete="off"
+                  />
+                  <ul class="airport-dropdown hidden" id="arrival-dropdown"></ul>
+                </div>
               </div>
 
-              <button type="button" id="add-layover-btn" class="add-layover-btn">
-                + Add layover
-              </button>
+              <div class="form-group" id="layovers-section">
+                <label>Layover Airports <span class="label-optional">(optional, up to 3)</span></label>
+                <ul id="layovers-list"></ul>
+                <div id="layover-suggestions" class="hidden">
+                  <p class="suggestions-label">Suggested connecting airports:</p>
+                  <div id="suggestions-chips"></div>
+                </div>
+                <button type="button" id="add-layover-btn" class="add-layover-btn">
+                  + Add layover
+                </button>
+              </div>
             </div>
 
-            <!-- Dietary preferences — same options as the road trip page -->
+            <!-- ── SHARED: dietary preferences (used by both modes) ──────────── -->
             <div class="form-group">
               <label>Dietary Preferences</label>
               <div class="diet-dropdown" id="diet-dropdown">
