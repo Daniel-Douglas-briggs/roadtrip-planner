@@ -869,62 +869,52 @@ function renderAirportCard(cardIndex, code, restaurants, selectedDiets, error, l
     const cuisine = getCuisineLabel(place.types || []);
 
     // Terminal / gate — parsed from the formatted_address Google returned
-    const loc      = parseTerminalInfo(place.formatted_address || "");
-    const hasLoc   = loc.terminal || loc.gate;
+    const loc    = parseTerminalInfo(place.formatted_address || "");
+    const hasLoc = loc.terminal || loc.gate;
 
     // Opening hours — weekday_text is an array like ["Monday: 6:00 AM – 10:00 PM", ...]
     const hoursText = place.opening_hours && place.opening_hours.weekday_text;
     const hasHours  = hoursText && hoursText.length > 0;
+
+    // Today's hours: Google indexes Mon=0 … Sun=6
+    // JavaScript's getDay() returns Sun=0 … Sat=6, so we convert
+    const jsDayIndex     = new Date().getDay();
+    const googleDayIndex = (jsDayIndex + 6) % 7;
+    const todayHours     = hasHours
+      ? hoursText[googleDayIndex].replace(/^[^:]+:\s*/, "")
+      : null;
+
+    const allHoursHTML = hasHours
+      ? hoursText.map(function (h) { return '<li>' + h + '</li>'; }).join('')
+      : '';
+
+    // Location line: prefer terminal/gate, fall back to formatted address
+    const locationLine = hasLoc
+      ? (loc.terminal || '') + (loc.terminal && loc.gate ? ' · ' : '') + (loc.gate || '')
+      : (place.formatted_address || '');
 
     const item = document.createElement("div");
     item.className = "flight-restaurant-item" +
       (i < restaurants.length - 1 ? " flight-restaurant-item--divider" : "");
 
     item.innerHTML =
-      '<div class="flight-restaurant-top">' +
-        '<span class="flight-restaurant-name">' + name + '</span>' +
-        (rating ? '<span class="flight-restaurant-rating">★ ' + rating + '</span>' : '') +
+      '<div class="option-label">Option ' + String.fromCharCode(65 + i) + '</div>' +
+      '<div class="flight-restaurant-name">' + name + '</div>' +
+      (hasLoc ? '<div class="restaurant-address">' + locationLine + '</div>' : '') +
+      '<div class="restaurant-meta">' +
+        (rating ? '<span class="rating">★ ' + rating + '</span>' : '') +
+        (rating && cuisine ? ' · ' : '') +
+        (cuisine ? '<span>' + cuisine + '</span>' : '') +
+        (todayHours ? ' · <span class="today-hours">Today: ' + todayHours + '</span>' : '') +
       '</div>' +
-      (cuisine ? '<div class="flight-cuisine-type">' + cuisine + '</div>' : '') +
-
-      // Terminal and gate location line (only shown when available)
-      (hasLoc
-        ? '<div class="flight-location-info">' +
-            (loc.terminal ? '<span class="flight-terminal">📍 ' + loc.terminal + '</span>' : '') +
-            (loc.gate     ? '<span class="flight-gate">'     + loc.gate     + '</span>' : '') +
-          '</div>'
+      (allHoursHTML
+        ? '<details class="all-hours"><summary>See all hours</summary><ul>' + allHoursHTML + '</ul></details>'
         : '') +
-
-      // Collapsible hours section
-      (hasHours
-        ? '<div class="flight-hours-section">' +
-            '<button type="button" class="flight-hours-toggle">' +
-              'Hours <span class="flight-hours-arrow">▾</span>' +
-            '</button>' +
-            '<ul class="flight-hours-list hidden">' +
-              hoursText.map(function (h) { return '<li>' + h + '</li>'; }).join('') +
-            '</ul>' +
-          '</div>'
-        : '') +
-
       (place.website
         ? '<a class="restaurant-website" href="' + place.website + '" target="_blank" rel="noopener">Visit website ↗</a>'
         : '');
 
     card.appendChild(item);
-
-    // Wire up the hours toggle click handler after the element is in the DOM
-    if (hasHours) {
-      const toggleBtn  = item.querySelector('.flight-hours-toggle');
-      const hoursList  = item.querySelector('.flight-hours-list');
-      const arrowSpan  = item.querySelector('.flight-hours-arrow');
-
-      toggleBtn.addEventListener('click', function () {
-        const isOpen = !hoursList.classList.contains('hidden');
-        hoursList.classList.toggle('hidden', isOpen);
-        arrowSpan.textContent = isOpen ? '▾' : '▴';
-      });
-    }
   });
 }
 
