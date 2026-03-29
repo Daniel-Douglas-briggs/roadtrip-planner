@@ -584,6 +584,52 @@ button#search-btn:disabled {
   text-decoration: underline;
 }
 
+/* "Open in maps" row shown below each restaurant result */
+.maps-links {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 7px;
+  font-size: 0.82rem;
+}
+
+.maps-links-label {
+  color: #888;
+}
+
+.maps-link {
+  display: inline-block;
+  padding: 2px 9px;
+  border: 1px solid #c4ddc4;
+  border-radius: 12px;
+  background: #f3f7f3;
+  color: #2c5f2e;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.maps-link:hover {
+  background: #2c5f2e;
+  color: white;
+  border-color: #2c5f2e;
+}
+
+/* "Order online" pill buttons — same layout as maps-links but styled red */
+.order-link {
+  border-color: #f4c4b4;
+  background: #fff5f2;
+  color: #c0392b;
+}
+
+.order-link:hover {
+  background: #c0392b;
+  color: white;
+  border-color: #c0392b;
+}
+
 .all-hours ul {
   list-style: none;
   margin-top: 6px;

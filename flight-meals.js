@@ -990,6 +990,23 @@ function renderAirportCard(cardIndex, code, restaurants, selectedDiets, error, l
         ? (loc.terminal || '') + (loc.terminal && loc.gate ? ' · ' : '') + (loc.gate || '')
         : (place.formatted_address || '');
 
+      const mapLat  = place.geometry && place.geometry.location ? place.geometry.location.lat() : null;
+      const mapLng  = place.geometry && place.geometry.location ? place.geometry.location.lng() : null;
+      const mapName = encodeURIComponent(name);
+      const mapsLinksHTML = (mapLat && mapLng)
+        ? '<div class="maps-links">' +
+            '<span class="maps-links-label">Open in maps:</span> ' +
+            '<a href="https://www.google.com/maps/place/?q=place_id:' + place.place_id + '" target="_blank" rel="noopener" class="maps-link">Google Maps</a>' +
+            '<a href="https://maps.apple.com/?q=' + mapName + '&ll=' + mapLat + ',' + mapLng + '" target="_blank" rel="noopener" class="maps-link">Apple Maps</a>' +
+            '<a href="https://waze.com/ul?ll=' + mapLat + ',' + mapLng + '&navigate=yes" target="_blank" rel="noopener" class="maps-link">Waze</a>' +
+          '</div>' +
+          '<div class="maps-links">' +
+            '<span class="maps-links-label">Order online:</span> ' +
+            '<a href="https://www.doordash.com/search/store/' + mapName + '/" target="_blank" rel="noopener" class="maps-link order-link">DoorDash</a>' +
+            '<a href="https://www.ubereats.com/search?q=' + mapName + '" target="_blank" rel="noopener" class="maps-link order-link">Uber Eats</a>' +
+          '</div>'
+        : '';
+
       const item = document.createElement("div");
       item.className = "flight-restaurant-item flight-restaurant-item--divider";
 
@@ -1008,7 +1025,8 @@ function renderAirportCard(cardIndex, code, restaurants, selectedDiets, error, l
           : '') +
         (place.website
           ? '<a class="restaurant-website" href="' + place.website + '" target="_blank" rel="noopener">Visit website ↗</a>'
-          : '');
+          : '') +
+        mapsLinksHTML;
 
       optionsContainer.appendChild(item);
     });
