@@ -25,6 +25,11 @@ let flightMarkers = [];       // tracks all markers so we can clear them on re-s
 let flightBounds  = null;     // expands as each airport's results arrive
 let currentMode   = "airport"; // "airport" | "route" — which tab is active
 
+// Cache keyed by "AIRPORTCODE|dietquery" (e.g. "ORD|keto gluten free").
+// Stores the full callback result so repeated searches for the same
+// airport + diet combination skip all three API calls entirely.
+const airportSearchCache = {};
+
 
 // ── Called automatically by Google when the Maps API finishes loading ─────────
 
@@ -611,7 +616,7 @@ flightSearchBtn.addEventListener("click", function () {
     flightResultsList.appendChild(card);
 
     searchRestaurantsAtAirport(airportCode, dietQuery, function (data) {
-      renderAirportCard(0, airportCode, data.restaurants, selectedDiets, data.error, data.location);
+      renderAirportCard(0, airportCode, data.restaurants, selectedDiets, data.error, data.location, data.pool);
     });
     return;
   }
@@ -657,42 +662,111 @@ flightSearchBtn.addEventListener("click", function () {
     });
   }
 
-  if (layovers.length === 0) {
-    const empty = document.createElement("div");
-    empty.className = "flight-no-layovers";
-    empty.textContent = "No layovers on this route. Add a layover airport to see meal options.";
-    flightResultsList.appendChild(empty);
-    return;
-  }
+  // Build the full list of airports to search:
+  // departure first, then layovers, then arrival.
+  // Each entry carries a "role" so we can show/hide by type later.
+  const airportsToSearch = [];
+  airportsToSearch.push({ code: departure, role: "departure" });
+  layovers.forEach(function (code) {
+    airportsToSearch.push({ code: code, role: "layover" });
+  });
+  airportsToSearch.push({ code: arrival, role: "arrival" });
 
-  // Create a loading card for each layover right away, then fill them in one by one
-  layovers.forEach(function (code, i) {
+  // Render airport filter toggles above the results list
+  renderAirportFilterToggles(departure, arrival, layovers.length > 0);
+
+  // Create a loading card for each airport right away, then fill them in one by one
+  airportsToSearch.forEach(function (airport, i) {
     const card = document.createElement("div");
     card.className = "flight-airport-card";
     card.id = "airport-card-" + i;
+    // Tag each card with its role so the filter toggles can show/hide it
+    card.dataset.role = airport.role;
+    // Departure and arrival cards start hidden — user must toggle them on
+    if (airport.role === "departure" || airport.role === "arrival") {
+      card.classList.add("hidden");
+    }
     card.innerHTML =
       '<div class="flight-airport-header">' +
-        '<span class="flight-airport-code">' + code + '</span>' +
+        '<span class="flight-airport-code">' + airport.code + '</span>' +
+        '<span class="flight-airport-role-badge">' + capitalize(airport.role) + '</span>' +
       '</div>' +
       '<div class="flight-airport-loading" id="airport-loading-' + i + '">' +
-        '🔍 Finding restaurants at ' + code + '…' +
+        '🔍 Finding restaurants at ' + airport.code + '…' +
       '</div>';
     flightResultsList.appendChild(card);
   });
 
-  // Search each layover one at a time so we don't flood the API
-  searchLayoversSequentially(layovers, 0, dietQuery, selectedDiets);
+  // Search all airports one at a time so we don't flood the API
+  searchAirportsSequentially(airportsToSearch, 0, dietQuery, selectedDiets);
 });
 
-// Searches one layover, renders its card, then moves to the next
-function searchLayoversSequentially(layovers, index, dietQuery, selectedDiets) {
-  if (index >= layovers.length) return;
+// Searches one airport from the list, renders its card, then moves to the next.
+// Works for departure, layover, and arrival cards alike.
+function searchAirportsSequentially(airports, index, dietQuery, selectedDiets) {
+  if (index >= airports.length) return;
 
-  const code = layovers[index];
+  const code = airports[index].code;
   searchRestaurantsAtAirport(code, dietQuery, function (data) {
-    renderAirportCard(index, code, data.restaurants, selectedDiets, data.error, data.location);
-    searchLayoversSequentially(layovers, index + 1, dietQuery, selectedDiets);
+    renderAirportCard(index, code, data.restaurants, selectedDiets, data.error, data.location, data.pool);
+    searchAirportsSequentially(airports, index + 1, dietQuery, selectedDiets);
   });
+}
+
+
+// ── Airport filter toggles ────────────────────────────────────────────────────
+// Renders three buttons above the results list:
+//   "Departure"  "All Airports"  "Arrival"
+// Clicking one shows/hides the cards tagged with data-role="departure" etc.
+// "All Airports" shows every card.
+// hasLayovers controls whether the middle button says "Layovers" or "All Airports".
+
+function renderAirportFilterToggles(depCode, arrCode, hasLayovers) {
+  // Remove any existing toggle bar from a previous search
+  const existing = document.getElementById("airport-filter-bar");
+  if (existing) existing.remove();
+
+  const bar = document.createElement("div");
+  bar.className = "airport-filter-bar";
+  bar.id = "airport-filter-bar";
+
+  // Which filter is currently active — starts on "layovers" (or "all" if no layovers)
+  let activeFilter = hasLayovers ? "layover" : "all";
+
+  const buttons = [
+    { label: "Departure · " + depCode, filter: "departure" },
+    { label: hasLayovers ? "Layovers" : "All Airports", filter: hasLayovers ? "layover" : "all" },
+    { label: "Arrival · " + arrCode,   filter: "arrival"   },
+  ];
+
+  buttons.forEach(function (def) {
+    const btn = document.createElement("button");
+    btn.type      = "button";
+    btn.className = "airport-filter-btn" + (def.filter === activeFilter ? " airport-filter-btn--active" : "");
+    btn.textContent = def.label;
+    btn.dataset.filter = def.filter;
+
+    btn.addEventListener("click", function () {
+      activeFilter = def.filter;
+
+      // Update active styling
+      bar.querySelectorAll(".airport-filter-btn").forEach(function (b) {
+        b.classList.toggle("airport-filter-btn--active", b.dataset.filter === activeFilter);
+      });
+
+      // Show / hide cards
+      document.querySelectorAll(".flight-airport-card[data-role]").forEach(function (card) {
+        const show = activeFilter === "all" || card.dataset.role === activeFilter;
+        card.classList.toggle("hidden", !show);
+      });
+    });
+
+    bar.appendChild(btn);
+  });
+
+  // Insert the bar inside the left panel, above the scrollable results list
+  const leftPanel = document.getElementById("flight-left-panel");
+  leftPanel.insertBefore(bar, flightResultsList);
 }
 
 
@@ -703,6 +777,13 @@ function searchLayoversSequentially(layovers, index, dietQuery, selectedDiets) {
 // 4. Call back with { restaurants, error }
 
 function searchRestaurantsAtAirport(airportCode, dietQuery, callback) {
+  // Return cached result immediately if we've already searched this combination
+  const cacheKey = airportCode + "|" + dietQuery;
+  if (airportSearchCache[cacheKey]) {
+    callback(airportSearchCache[cacheKey]);
+    return;
+  }
+
   // Step 1: convert the 3-letter code into GPS coordinates
   geocoder.geocode({ address: airportCode + " airport" }, function (geoResults, geoStatus) {
     if (geoStatus !== "OK" || !geoResults.length) {
@@ -726,10 +807,15 @@ function searchRestaurantsAtAirport(airportCode, dietQuery, callback) {
       },
       function (results, status) {
         if (status === google.maps.places.PlacesServiceStatus.OK && results.length > 0) {
-          // Step 3: enrich the top 4 results with website links
-          enrichWithWebsite(results.slice(0, 4), airportLocation, callback);
+          // Step 3: enrich only the first 3 results upfront, but keep the
+          // full results array as the pool so the "Show additional options"
+          // button can load the next 3 on demand.
+          enrichWithWebsite(results.slice(0, 3), airportLocation, results, function (data) {
+            airportSearchCache[cacheKey] = data; // save for re-use
+            callback(data);
+          });
         } else {
-          callback({ restaurants: [], location: airportLocation });
+          callback({ restaurants: [], pool: [], location: airportLocation });
         }
       }
     );
@@ -737,14 +823,16 @@ function searchRestaurantsAtAirport(airportCode, dietQuery, callback) {
 }
 
 // Fetches the website URL for each place via getDetails, then calls back
-// with { restaurants: [...enriched places], location }
-function enrichWithWebsite(places, location, callback) {
+// with { restaurants: [...enriched places], pool, location }
+// pool — the full unfiltered results array, passed through so callers can
+//        offer a "Show additional options" button later.
+function enrichWithWebsite(places, location, pool, callback) {
   const enriched = [];
   let index = 0;
 
   function fetchNext() {
     if (index >= places.length) {
-      callback({ restaurants: enriched, location: location });
+      callback({ restaurants: enriched, pool: pool, location: location });
       return;
     }
 
@@ -797,7 +885,7 @@ function parseTerminalInfo(address) {
 
 // ── Render one airport's results into its card ────────────────────────────────
 
-function renderAirportCard(cardIndex, code, restaurants, selectedDiets, error, location) {
+function renderAirportCard(cardIndex, code, restaurants, selectedDiets, error, location, pool) {
   const card   = document.getElementById("airport-card-" + cardIndex);
   const loader = document.getElementById("airport-loading-" + cardIndex);
   if (!card) return;
@@ -862,60 +950,108 @@ function renderAirportCard(cardIndex, code, restaurants, selectedDiets, error, l
     card.appendChild(filterRow);
   }
 
-  // One result row per restaurant
-  restaurants.forEach(function (place, i) {
-    const name    = place.name;
-    const rating  = place.rating ? place.rating.toFixed(1) : null;
-    const cuisine = getCuisineLabel(place.types || []);
+  // Container for restaurant rows — replaced when "Show additional options" loads more
+  const optionsContainer = document.createElement("div");
+  card.appendChild(optionsContainer);
 
-    // Terminal / gate — parsed from the formatted_address Google returned
-    const loc    = parseTerminalInfo(place.formatted_address || "");
-    const hasLoc = loc.terminal || loc.gate;
+  // Tracks how far into the pool we've shown so far
+  let poolOffset = 3;
 
-    // Opening hours — weekday_text is an array like ["Monday: 6:00 AM – 10:00 PM", ...]
-    const hoursText = place.opening_hours && place.opening_hours.weekday_text;
-    const hasHours  = hoursText && hoursText.length > 0;
+  // Builds restaurant rows for the given batch, labelled Option A, B, C …
+  // startLabel controls the letter offset so additional options continue from D, G, etc.
+  function renderOptionRows(places, startLabel) {
+    places.forEach(function (place, i) {
+      const name    = place.name;
+      const rating  = place.rating ? place.rating.toFixed(1) : null;
+      const cuisine = getCuisineLabel(place.types || []);
 
-    // Today's hours: Google indexes Mon=0 … Sun=6
-    // JavaScript's getDay() returns Sun=0 … Sat=6, so we convert
-    const jsDayIndex     = new Date().getDay();
-    const googleDayIndex = (jsDayIndex + 6) % 7;
-    const todayHours     = hasHours
-      ? hoursText[googleDayIndex].replace(/^[^:]+:\s*/, "")
-      : null;
+      // Terminal / gate — parsed from the formatted_address Google returned
+      const loc    = parseTerminalInfo(place.formatted_address || "");
+      const hasLoc = loc.terminal || loc.gate;
 
-    const allHoursHTML = hasHours
-      ? hoursText.map(function (h) { return '<li>' + h + '</li>'; }).join('')
-      : '';
+      // Opening hours — weekday_text is an array like ["Monday: 6:00 AM – 10:00 PM", ...]
+      const hoursText = place.opening_hours && place.opening_hours.weekday_text;
+      const hasHours  = hoursText && hoursText.length > 0;
 
-    // Location line: prefer terminal/gate, fall back to formatted address
-    const locationLine = hasLoc
-      ? (loc.terminal || '') + (loc.terminal && loc.gate ? ' · ' : '') + (loc.gate || '')
-      : (place.formatted_address || '');
+      // Today's hours: Google indexes Mon=0 … Sun=6
+      // JavaScript's getDay() returns Sun=0 … Sat=6, so we convert
+      const jsDayIndex     = new Date().getDay();
+      const googleDayIndex = (jsDayIndex + 6) % 7;
+      const todayHours     = hasHours
+        ? hoursText[googleDayIndex].replace(/^[^:]+:\s*/, "")
+        : null;
 
-    const item = document.createElement("div");
-    item.className = "flight-restaurant-item" +
-      (i < restaurants.length - 1 ? " flight-restaurant-item--divider" : "");
+      const allHoursHTML = hasHours
+        ? hoursText.map(function (h) { return '<li>' + h + '</li>'; }).join('')
+        : '';
 
-    item.innerHTML =
-      '<div class="option-label">Option ' + String.fromCharCode(65 + i) + '</div>' +
-      '<div class="flight-restaurant-name">' + name + '</div>' +
-      (hasLoc ? '<div class="restaurant-address">' + locationLine + '</div>' : '') +
-      '<div class="restaurant-meta">' +
-        (rating ? '<span class="rating">★ ' + rating + '</span>' : '') +
-        (rating && cuisine ? ' · ' : '') +
-        (cuisine ? '<span>' + cuisine + '</span>' : '') +
-        (todayHours ? ' · <span class="today-hours">Today: ' + todayHours + '</span>' : '') +
-      '</div>' +
-      (allHoursHTML
-        ? '<details class="all-hours"><summary>See all hours</summary><ul>' + allHoursHTML + '</ul></details>'
-        : '') +
-      (place.website
-        ? '<a class="restaurant-website" href="' + place.website + '" target="_blank" rel="noopener">Visit website ↗</a>'
-        : '');
+      // Location line: prefer terminal/gate, fall back to formatted address
+      const locationLine = hasLoc
+        ? (loc.terminal || '') + (loc.terminal && loc.gate ? ' · ' : '') + (loc.gate || '')
+        : (place.formatted_address || '');
 
-    card.appendChild(item);
-  });
+      const item = document.createElement("div");
+      item.className = "flight-restaurant-item flight-restaurant-item--divider";
+
+      item.innerHTML =
+        '<div class="option-label">Option ' + String.fromCharCode(65 + startLabel + i) + '</div>' +
+        '<div class="flight-restaurant-name">' + name + '</div>' +
+        (hasLoc ? '<div class="restaurant-address">' + locationLine + '</div>' : '') +
+        '<div class="restaurant-meta">' +
+          (rating ? '<span class="rating">★ ' + rating + '</span>' : '') +
+          (rating && cuisine ? ' · ' : '') +
+          (cuisine ? '<span>' + cuisine + '</span>' : '') +
+          (todayHours ? ' · <span class="today-hours">Today: ' + todayHours + '</span>' : '') +
+        '</div>' +
+        (allHoursHTML
+          ? '<details class="all-hours"><summary>See all hours</summary><ul>' + allHoursHTML + '</ul></details>'
+          : '') +
+        (place.website
+          ? '<a class="restaurant-website" href="' + place.website + '" target="_blank" rel="noopener">Visit website ↗</a>'
+          : '');
+
+      optionsContainer.appendChild(item);
+    });
+  }
+
+  // Render the initial 3 results
+  renderOptionRows(restaurants, 0);
+
+  // "Show additional options" button — only shown when the pool has more results
+  if (pool && pool.length > 3) {
+    const moreRow = document.createElement("div");
+    moreRow.className = "flight-more-options-row";
+
+    const moreBtn = document.createElement("button");
+    moreBtn.type      = "button";
+    moreBtn.className = "flight-more-options-btn";
+    moreBtn.textContent = "Show additional options";
+    moreRow.appendChild(moreBtn);
+    card.appendChild(moreRow);
+
+    moreBtn.addEventListener("click", function () {
+      // Hide the button while loading
+      moreBtn.disabled    = true;
+      moreBtn.textContent = "Loading…";
+
+      // Grab the next 3 from the pool (stop at the end — no wrapping)
+      const nextBatch = pool.slice(poolOffset, poolOffset + 3);
+      const labelStart = poolOffset; // so letters continue: D, E, F…
+      poolOffset += nextBatch.length;
+
+      enrichWithWebsite(nextBatch, location, pool, function (data) {
+        renderOptionRows(data.restaurants, labelStart);
+
+        // Hide the button once the pool is exhausted
+        if (poolOffset >= pool.length) {
+          moreRow.remove();
+        } else {
+          moreBtn.disabled    = false;
+          moreBtn.textContent = "Show additional options";
+        }
+      });
+    });
+  }
 }
 
 

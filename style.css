@@ -1223,13 +1223,21 @@ button#search-btn:disabled {
   overflow: hidden;
 }
 
-/* Left column: scrollable list of airport cards */
-#flight-results-list {
+/* Left column: flex column containing the filter bar + scrollable list */
+#flight-left-panel {
   width: 420px;
   min-width: 300px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #e5e7eb;
+  overflow: hidden;
+}
+
+/* Scrollable list of airport cards — fills remaining space below the filter bar */
+#flight-results-list {
+  flex: 1;
   overflow-y: auto;
   padding: 20px 24px;
-  border-right: 1px solid #e5e7eb;
 }
 
 /* Right column: map fills the remaining width */
@@ -1271,7 +1279,57 @@ button#search-btn:disabled {
   letter-spacing: 0.04em;
 }
 
-/* One card per layover airport */
+/* Airport filter toggle bar — sits above the results list in route mode */
+.airport-filter-bar {
+  display: flex;
+  gap: 8px;
+  padding: 12px 24px 4px;
+  flex-shrink: 0;
+}
+
+.airport-filter-btn {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border: 1.5px solid #d1d5db;
+  border-radius: 8px;
+  background: white;
+  color: #555;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.airport-filter-btn:hover {
+  border-color: #2c5f2e;
+  color: #2c5f2e;
+}
+
+.airport-filter-btn--active {
+  background: #2c5f2e;
+  border-color: #2c5f2e;
+  color: white;
+}
+
+/* Small "Departure" / "Arrival" / "Layover" badge inside each airport card header */
+.flight-airport-role-badge {
+  display: inline-block;
+  margin-left: 10px;
+  padding: 2px 8px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border-radius: 20px;
+  background: #f0f4f0;
+  color: #2c5f2e;
+  vertical-align: middle;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* One card per airport */
 .flight-airport-card {
   background: white;
   border: 1px solid #e0e0d8;
@@ -1300,6 +1358,34 @@ button#search-btn:disabled {
   border-radius: 8px;
   border: 1px dashed #ddd;
   text-align: center;
+}
+
+/* "Show additional options" button row at the bottom of an airport card */
+.flight-more-options-row {
+  padding-top: 14px;
+  text-align: center;
+}
+
+.flight-more-options-btn {
+  background: none;
+  border: 1.5px solid #2c5f2e;
+  color: #2c5f2e;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 7px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.flight-more-options-btn:hover:not(:disabled) {
+  background: #2c5f2e;
+  color: white;
+}
+
+.flight-more-options-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 /* Shown when the user searches with no layovers added */
