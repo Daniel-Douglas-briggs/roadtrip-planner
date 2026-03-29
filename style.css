@@ -1039,6 +1039,7 @@ button#search-btn:disabled {
 }
 
 /* "Find Meal Options" search button — same style as the road-trip search button */
+#dest-search-btn,
 #flight-search-btn {
   width: 100%;
   padding: 12px;
@@ -1053,6 +1054,7 @@ button#search-btn:disabled {
   transition: background-color 0.2s;
 }
 
+#dest-search-btn:hover,
 #flight-search-btn:hover {
   background-color: #1e4420;
 }
