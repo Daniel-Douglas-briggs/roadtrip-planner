@@ -30,6 +30,12 @@ let currentMode   = "airport"; // "airport" | "route" — which tab is active
 // airport + diet combination skip all three API calls entirely.
 const airportSearchCache = {};
 
+// Tracks the active search's diet settings and card count so the
+// "Add an additional airport" feature can search with the same preferences.
+let currentDietQuery    = "";
+let currentSelectedDiets = [];
+let cardCount           = 0;
+
 
 // ── Called automatically by Google when the Maps API finishes loading ─────────
 
@@ -366,17 +372,6 @@ document.addEventListener("click", function (e) {
   }
 });
 
-// Collapsible dietary group sections (+ / − toggle)
-document.querySelectorAll(".diet-group-label").forEach(function (label) {
-  label.addEventListener("click", function () {
-    const options = label.nextElementSibling;
-    const btn     = label.querySelector(".diet-group-toggle");
-    const isOpen  = !options.classList.contains("collapsed");
-    options.classList.toggle("collapsed", isOpen);
-    btn.textContent = isOpen ? "+" : "−";
-  });
-});
-
 dietMenu.addEventListener("change", function () {
   const checked = Array.from(dietMenu.querySelectorAll("input:checked"))
     .map(function (cb) { return cb.parentElement.textContent.trim(); });
@@ -594,6 +589,10 @@ flightSearchBtn.addEventListener("click", function () {
     flightMarkers.forEach(function (m) { m.setMap(null); });
     flightMarkers = [];
 
+    currentDietQuery     = dietQuery;
+    currentSelectedDiets = selectedDiets;
+    cardCount            = 1;
+
     if (!flightMap) {
       flightMap = new google.maps.Map(document.getElementById("flight-map"), {
         center: { lat: 39.5, lng: -98.35 },
@@ -617,6 +616,7 @@ flightSearchBtn.addEventListener("click", function () {
 
     searchRestaurantsAtAirport(airportCode, dietQuery, function (data) {
       renderAirportCard(0, airportCode, data.restaurants, selectedDiets, data.error, data.location, data.pool);
+      renderAddAirportUI();
     });
     return;
   }
@@ -672,6 +672,10 @@ flightSearchBtn.addEventListener("click", function () {
   });
   airportsToSearch.push({ code: arrival, role: "arrival" });
 
+  currentDietQuery     = dietQuery;
+  currentSelectedDiets = selectedDiets;
+  cardCount            = airportsToSearch.length;
+
   // Render airport filter toggles above the results list
   renderAirportFilterToggles(departure, arrival, layovers.length > 0);
 
@@ -704,7 +708,10 @@ flightSearchBtn.addEventListener("click", function () {
 // Searches one airport from the list, renders its card, then moves to the next.
 // Works for departure, layover, and arrival cards alike.
 function searchAirportsSequentially(airports, index, dietQuery, selectedDiets) {
-  if (index >= airports.length) return;
+  if (index >= airports.length) {
+    renderAddAirportUI();
+    return;
+  }
 
   const code = airports[index].code;
   searchRestaurantsAtAirport(code, dietQuery, function (data) {
@@ -797,7 +804,7 @@ function searchRestaurantsAtAirport(airportCode, dietQuery, callback) {
     // The query combines the dietary preferences with the airport code so Google
     // returns the most relevant results, e.g. "keto restaurant ORD airport"
     const dietPhrase = dietQuery ? dietQuery + " " : "";
-    const query      = dietPhrase + "restaurant " + airportCode + " airport";
+    const query      = dietPhrase + "restaurant inside " + airportCode + " airport terminal";
 
     placesService.textSearch(
       {
@@ -883,6 +890,19 @@ function parseTerminalInfo(address) {
 }
 
 
+// Returns a short label like "8 gluten free options" or "12 options".
+function buildCountLabel(count, selectedDiets) {
+  if (!count) return "";
+  const suffix = count === 1 ? "option" : "options";
+  if (selectedDiets.length === 1) {
+    return count + " " + selectedDiets[0] + " " + suffix;
+  } else if (selectedDiets.length > 1) {
+    return count + " " + suffix + " matching your preferences";
+  }
+  return count + " " + suffix;
+}
+
+
 // ── Render one airport's results into its card ────────────────────────────────
 
 function renderAirportCard(cardIndex, code, restaurants, selectedDiets, error, location, pool) {
@@ -906,6 +926,60 @@ function renderAirportCard(cardIndex, code, restaurants, selectedDiets, error, l
     card.appendChild(empty);
     return;
   }
+
+  // ── Add toggle arrow to the header and make it collapsible ──────────────
+  const header = card.querySelector(".flight-airport-header");
+  header.classList.add("flight-airport-header--toggle", "flight-airport-header--collapsed");
+
+  // Wrap the existing code/badge spans in a top row, then add the arrow
+  const topRow = document.createElement("div");
+  topRow.className = "flight-airport-header-top";
+  Array.from(header.childNodes).forEach(function (node) { topRow.appendChild(node); });
+  header.appendChild(topRow);
+
+  const arrow = document.createElement("span");
+  arrow.className = "flight-airport-toggle-arrow";
+  arrow.textContent = "▾";
+  topRow.appendChild(arrow);
+
+  // Options count shown below the airport code, visible even when collapsed
+  const countLabel = buildCountLabel(pool ? pool.length : 0, selectedDiets);
+  if (countLabel) {
+    const countDiv = document.createElement("div");
+    countDiv.className = "flight-options-count";
+    countDiv.textContent = countLabel;
+    header.appendChild(countDiv);
+  }
+
+  // All content below the header lives in this collapsible wrapper
+  const contentWrapper = document.createElement("div");
+  contentWrapper.className = "flight-airport-content flight-airport-content--collapsed";
+  card.appendChild(contentWrapper);
+
+  // Accordion toggle: open this card, close all others, zoom map
+  header.addEventListener("click", function () {
+    const isCollapsed = contentWrapper.classList.contains("flight-airport-content--collapsed");
+    if (isCollapsed) {
+      // Close every other open card
+      document.querySelectorAll(".flight-airport-content").forEach(function (c) {
+        c.classList.add("flight-airport-content--collapsed");
+      });
+      document.querySelectorAll(".flight-airport-header--toggle").forEach(function (h) {
+        h.classList.add("flight-airport-header--collapsed");
+      });
+      // Open this one
+      contentWrapper.classList.remove("flight-airport-content--collapsed");
+      header.classList.remove("flight-airport-header--collapsed");
+      // Zoom the map to this airport
+      if (flightMap && location) {
+        flightMap.panTo(location);
+        flightMap.setZoom(14);
+      }
+    } else {
+      contentWrapper.classList.add("flight-airport-content--collapsed");
+      header.classList.add("flight-airport-header--collapsed");
+    }
+  });
 
   // ── Shared map: drop a pin for each restaurant ───────────────────────────
   if (flightMap && location) {
@@ -939,7 +1013,6 @@ function renderAirportCard(cardIndex, code, restaurants, selectedDiets, error, l
   }
 
   // If dietary preferences were selected, show them as tags above the results
-  // so the user can see what filter was applied
   if (selectedDiets.length > 0) {
     const filterRow = document.createElement("div");
     filterRow.className = "flight-filter-row";
@@ -947,12 +1020,12 @@ function renderAirportCard(cardIndex, code, restaurants, selectedDiets, error, l
       selectedDiets.map(function (d) {
         return '<span class="diet-tag">' + capitalize(d) + '</span>';
       }).join("");
-    card.appendChild(filterRow);
+    contentWrapper.appendChild(filterRow);
   }
 
   // Container for restaurant rows — replaced when "Show additional options" loads more
   const optionsContainer = document.createElement("div");
-  card.appendChild(optionsContainer);
+  contentWrapper.appendChild(optionsContainer);
 
   // Tracks how far into the pool we've shown so far
   let poolOffset = 3;
@@ -1045,7 +1118,7 @@ function renderAirportCard(cardIndex, code, restaurants, selectedDiets, error, l
     moreBtn.className = "flight-more-options-btn";
     moreBtn.textContent = "Show additional options";
     moreRow.appendChild(moreBtn);
-    card.appendChild(moreRow);
+    contentWrapper.appendChild(moreRow);
 
     moreBtn.addEventListener("click", function () {
       // Hide the button while loading
@@ -1070,6 +1143,95 @@ function renderAirportCard(cardIndex, code, restaurants, selectedDiets, error, l
       });
     });
   }
+}
+
+
+// ── Add additional airport ────────────────────────────────────────────────────
+// Renders a button at the bottom of the results panel that lets the user
+// search any extra airport and append its card to the current results.
+
+function renderAddAirportUI() {
+  // Remove any existing instance so we don't get duplicates on re-render
+  const existing = document.getElementById("add-airport-ui");
+  if (existing) existing.remove();
+
+  const container = document.createElement("div");
+  container.id = "add-airport-ui";
+  container.className = "add-airport-container";
+
+  const toggleBtn = document.createElement("button");
+  toggleBtn.type = "button";
+  toggleBtn.className = "add-airport-toggle-btn";
+  toggleBtn.textContent = "+ Add an additional airport?";
+  container.appendChild(toggleBtn);
+
+  const form = document.createElement("div");
+  form.className = "add-airport-form hidden";
+
+  const input = document.createElement("input");
+  input.type = "text";
+  input.className = "airport-input add-airport-input";
+  input.maxLength = 3;
+  input.placeholder = "Airport code (e.g. ORD)";
+
+  const searchBtn = document.createElement("button");
+  searchBtn.type = "button";
+  searchBtn.className = "add-airport-search-btn";
+  searchBtn.textContent = "Search";
+
+  form.appendChild(input);
+  form.appendChild(searchBtn);
+  container.appendChild(form);
+
+  // Auto-uppercase as the user types
+  input.addEventListener("input", function () {
+    const pos = input.selectionStart;
+    input.value = input.value.toUpperCase();
+    input.setSelectionRange(pos, pos);
+  });
+
+  toggleBtn.addEventListener("click", function () {
+    form.classList.toggle("hidden");
+    if (!form.classList.contains("hidden")) input.focus();
+  });
+
+  function doSearch() {
+    const code = input.value.trim().toUpperCase();
+    if (!code) return;
+
+    const newIndex = cardCount;
+    cardCount++;
+
+    // Create a loading card and scroll it into view
+    const card = document.createElement("div");
+    card.className = "flight-airport-card";
+    card.id = "airport-card-" + newIndex;
+    card.innerHTML =
+      '<div class="flight-airport-header">' +
+        '<span class="flight-airport-code">' + code + '</span>' +
+      '</div>' +
+      '<div class="flight-airport-loading" id="airport-loading-' + newIndex + '">' +
+        '🔍 Finding restaurants at ' + code + '…' +
+      '</div>';
+
+    // Insert the new card before the add-airport UI so it stays at the bottom
+    flightResultsList.appendChild(card);
+    card.scrollIntoView({ behavior: "smooth", block: "start" });
+
+    input.value = "";
+    form.classList.add("hidden");
+
+    searchRestaurantsAtAirport(code, currentDietQuery, function (data) {
+      renderAirportCard(newIndex, code, data.restaurants, currentSelectedDiets, data.error, data.location, data.pool);
+    });
+  }
+
+  searchBtn.addEventListener("click", doSearch);
+  input.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") doSearch();
+  });
+
+  document.getElementById("flight-left-panel").appendChild(container);
 }
 
 

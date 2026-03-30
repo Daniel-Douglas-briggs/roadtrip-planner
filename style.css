@@ -209,34 +209,6 @@ input[type="number"]:focus {
   display: block !important; /* overrides the HTML hidden attribute when open */
 }
 
-.diet-group-label {
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #888;
-  padding: 8px 12px 4px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  cursor: pointer;
-  user-select: none;
-}
-
-.diet-group-toggle {
-  background: none;
-  border: none;
-  color: #888;
-  font-size: 1rem;
-  line-height: 1;
-  padding: 0 2px;
-  cursor: pointer;
-  font-weight: 700;
-}
-
-.diet-group-options.collapsed {
-  display: none;
-}
 
 .diet-option {
   display: flex;
@@ -735,6 +707,42 @@ button#search-btn:disabled {
 /* A stop card where no restaurant was found */
 .stop-card--empty .restaurant-name {
   color: #aaa;
+}
+
+/* Collapsible stop cards */
+.stop-number--toggle {
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+}
+
+.stop-header-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.stop-toggle-arrow {
+  margin-left: auto;
+  font-size: 1rem;
+  color: #888;
+  transition: transform 0.2s ease;
+}
+
+.stop-number--collapsed .stop-toggle-arrow {
+  transform: rotate(-90deg);
+}
+
+.stop-options-count {
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: #888;
+  margin-top: 2px;
+}
+
+.stop-options-container--collapsed {
+  display: none;
 }
 
 
@@ -1388,6 +1396,94 @@ button#search-btn:disabled {
 
 .flight-airport-header {
   margin-bottom: 12px;
+}
+
+.flight-airport-header--toggle {
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+}
+
+.flight-airport-header-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.flight-airport-toggle-arrow {
+  margin-left: auto;
+  font-size: 1rem;
+  color: #888;
+  transition: transform 0.2s ease;
+}
+
+.flight-airport-header--collapsed .flight-airport-toggle-arrow {
+  transform: rotate(-90deg);
+}
+
+.flight-options-count {
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: #888;
+  margin-top: 2px;
+}
+
+.flight-airport-content--collapsed {
+  display: none;
+}
+
+/* ── Add additional airport UI ────────────────────────────────────────────── */
+
+.add-airport-container {
+  padding: 16px 0 8px;
+  border-top: 1px solid #e0e0d8;
+  margin-top: 8px;
+}
+
+.add-airport-toggle-btn {
+  background: none;
+  border: none;
+  color: #2c5f2e;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.add-airport-toggle-btn:hover {
+  text-decoration: underline;
+}
+
+.add-airport-form {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  align-items: center;
+}
+
+.add-airport-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+}
+
+.add-airport-search-btn {
+  padding: 8px 16px;
+  background: #2c5f2e;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.add-airport-search-btn:hover {
+  background: #1e4420;
 }
 
 .flight-airport-code {

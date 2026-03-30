@@ -21,7 +21,10 @@ let directionsRenderer;  // draws the route line on the map
 let placesService;       // searches for nearby restaurants
 let geocoder;            // converts GPS coordinates → city names
 let markers           = []; // numbered stop pins (green circles)
-let restaurantMarkers = []; // selected restaurant pins (orange)
+let restaurantMarkers = []; // selected restaurant pins (orange, used by custom stops)
+let poolMarkers       = []; // { marker, placeId, isDisplayed } — all results for the open card
+let selectedPoolMarker = null; // the entry whose marker is currently a yellow star
+let currentSelectedDiets = []; // dietary preferences from the most recent search
 
 
 // ── API load error handlers ───────────────────────────────────────────────────
@@ -174,17 +177,6 @@ document.addEventListener("click", function (e) {
   }
 });
 
-// Collapsible dietary group sections (+ / − toggle)
-document.querySelectorAll(".diet-group-label").forEach(function (label) {
-  label.addEventListener("click", function () {
-    const options = label.nextElementSibling;
-    const btn     = label.querySelector(".diet-group-toggle");
-    const isOpen  = !options.classList.contains("collapsed");
-    options.classList.toggle("collapsed", isOpen);
-    btn.textContent = isOpen ? "+" : "−";
-  });
-});
-
 // Update the summary label whenever a checkbox changes
 dietMenu.addEventListener("change", function () {
   const checked = Array.from(dietMenu.querySelectorAll("input:checked"))
@@ -213,6 +205,7 @@ searchBtn.addEventListener("click", function () {
     dietMenu.querySelectorAll("input:checked")
   ).map(function (cb) { return cb.value; });
   const diet = checkedDiets.join(" ");
+  currentSelectedDiets = checkedDiets;
 
   if (!start || !end) {
     showError("Please enter both a starting city and a destination.");
@@ -229,6 +222,7 @@ searchBtn.addEventListener("click", function () {
     clearResults();
     clearMarkers();
     clearRestaurantMarkers();
+    clearPoolMarkers();
     showLoading();
     planRoute(start, end, interval, diet);
 
@@ -241,6 +235,7 @@ searchBtn.addEventListener("click", function () {
     clearResults();
     clearMarkers();
     clearRestaurantMarkers();
+    clearPoolMarkers();
     showLoading();
     planRouteWithWaypoints(start, end, customWaypoints, diet);
   }
@@ -570,6 +565,20 @@ function enrichWithHours(places, callback) {
 }
 
 
+// Returns a short label like "8 gluten free options" or "12 options".
+// Used in stop card headers so users can gauge options before opening.
+function buildCountLabel(count, selectedDiets) {
+  if (!count) return "";
+  const suffix = count === 1 ? "option" : "options";
+  if (selectedDiets.length === 1) {
+    return count + " " + selectedDiets[0] + " " + suffix;
+  } else if (selectedDiets.length > 1) {
+    return count + " " + suffix + " matching your preferences";
+  }
+  return count + " " + suffix;
+}
+
+
 // ── Step 7: build the results list and map pins ───────────────────────────────
 
 function displayResults(results, totalMiles) {
@@ -601,22 +610,39 @@ function addStopCard(number, locationName, places, location, windowPoints, pool)
   const li     = document.createElement("li");
   li.className = "stop-card";
 
-  // Header row — city name with stop number as a small badge
+  // Header row — city name, stop badge, collapse arrow, and options count
   const header     = document.createElement("div");
-  header.className = "stop-number";
-  header.innerHTML = locationName + ' <span class="stop-badge">#' + number + '</span>';
+  header.className = "stop-number stop-number--toggle stop-number--collapsed";
+
+  const countLabel = buildCountLabel(pool ? pool.length : 0, currentSelectedDiets);
+  header.innerHTML =
+    '<div class="stop-header-top">' +
+      locationName +
+      ' <span class="stop-badge">#' + number + '</span>' +
+      '<span class="stop-toggle-arrow">▾</span>' +
+    '</div>' +
+    (countLabel ? '<div class="stop-options-count">' + countLabel + '</div>' : '');
   li.appendChild(header);
 
-  // Wrapper div for the restaurant rows — cleared and rebuilt on every refresh
+  // Wrapper div for the restaurant rows — collapsed by default
   const optionsContainer = document.createElement("div");
+  optionsContainer.className = "stop-options-container stop-options-container--collapsed";
   li.appendChild(optionsContainer);
 
   // Tracks where we are in the pool so each refresh shows the next set of options
   let poolOffset = 3;
 
+  // Tracks which restaurants are currently displayed (updated on every renderOptions call)
+  let currentDisplayed = places;
+
   // Builds (or rebuilds) the restaurant rows inside optionsContainer
   function renderOptions(restaurantsToShow) {
+    currentDisplayed = restaurantsToShow;
     optionsContainer.innerHTML = "";
+    // If this card is already open, refresh the pool markers to reflect new green/orange split
+    if (!optionsContainer.classList.contains("stop-options-container--collapsed")) {
+      showPoolMarkers(pool, currentDisplayed);
+    }
 
     restaurantsToShow.forEach(function (place, i) {
       const name    = place.name;
@@ -683,7 +709,18 @@ function addStopCard(number, locationName, places, location, windowPoints, pool)
 
       const restaurantLocation = place.geometry.location;
       row.addEventListener("click", function () {
-        addRestaurantMarker(restaurantLocation, name, number);
+        // Reset the previously starred marker back to its normal color
+        if (selectedPoolMarker) {
+          selectedPoolMarker.marker.setIcon(
+            selectedPoolMarker.isDisplayed ? greenRestaurantIcon() : orangeRestaurantIcon()
+          );
+        }
+        // Turn this place's pool marker into a yellow star
+        const entry = poolMarkers.find(function (m) { return m.placeId === place.place_id; });
+        if (entry) {
+          entry.marker.setIcon(yellowStarIcon());
+          selectedPoolMarker = entry;
+        }
         const bounds = new google.maps.LatLngBounds();
         bounds.extend(restaurantLocation);
         bounds.extend(location);
@@ -709,7 +746,7 @@ function addStopCard(number, locationName, places, location, windowPoints, pool)
     refreshBtn.className = "refresh-options-btn";
     refreshBtn.textContent = "Show different options";
     refreshRow.appendChild(refreshBtn);
-    li.appendChild(refreshRow);
+    optionsContainer.appendChild(refreshRow);
 
     refreshBtn.addEventListener("click", function () {
       refreshBtn.disabled    = true;
@@ -729,6 +766,33 @@ function addStopCard(number, locationName, places, location, windowPoints, pool)
       });
     });
   }
+
+  // Toggle open/close when the header is clicked — closes all other open cards first
+  header.addEventListener("click", function () {
+    const isCurrentlyCollapsed = optionsContainer.classList.contains("stop-options-container--collapsed");
+    if (isCurrentlyCollapsed) {
+      // Close every other open card
+      stopsList.querySelectorAll(".stop-options-container").forEach(function (c) {
+        c.classList.add("stop-options-container--collapsed");
+      });
+      stopsList.querySelectorAll(".stop-number--toggle").forEach(function (h) {
+        h.classList.add("stop-number--collapsed");
+      });
+      // Open this one
+      optionsContainer.classList.remove("stop-options-container--collapsed");
+      header.classList.remove("stop-number--collapsed");
+      // Show pins for all pool results
+      showPoolMarkers(pool, currentDisplayed);
+      // Zoom the map into this city
+      map.panTo(location);
+      map.setZoom(12);
+    } else {
+      // Just close this one
+      optionsContainer.classList.add("stop-options-container--collapsed");
+      header.classList.add("stop-number--collapsed");
+      clearPoolMarkers();
+    }
+  });
 
   stopsList.appendChild(li);
 
@@ -813,6 +877,66 @@ function addRestaurantMarker(location, title, stopNumber) {
 function clearRestaurantMarkers() {
   restaurantMarkers.forEach(function (m) { m.setMap(null); });
   restaurantMarkers = [];
+}
+
+// ── Pool marker helpers ───────────────────────────────────────────────────────
+// Shows a pin for every result in the pool when a stop card is opened.
+// Green = one of the 3 displayed options. Orange = everything else.
+// Clicking a row turns that pin into a yellow star.
+
+function greenRestaurantIcon() {
+  return {
+    path: google.maps.SymbolPath.CIRCLE,
+    scale: 9,
+    fillColor: "#2c5f2e",
+    fillOpacity: 1,
+    strokeColor: "white",
+    strokeWeight: 2,
+  };
+}
+
+function orangeRestaurantIcon() {
+  return {
+    path: google.maps.SymbolPath.CIRCLE,
+    scale: 7,
+    fillColor: "#f4a261",
+    fillOpacity: 1,
+    strokeColor: "white",
+    strokeWeight: 1.5,
+  };
+}
+
+function yellowStarIcon() {
+  return {
+    path: "M 0 -1 L 0.224 -0.309 L 0.951 -0.309 L 0.363 0.118 L 0.588 0.809 L 0 0.382 L -0.588 0.809 L -0.363 0.118 L -0.951 -0.309 L -0.224 -0.309 Z",
+    scale: 14,
+    fillColor: "#FFD700",
+    fillOpacity: 1,
+    strokeColor: "#b8860b",
+    strokeWeight: 1,
+  };
+}
+
+function clearPoolMarkers() {
+  poolMarkers.forEach(function (entry) { entry.marker.setMap(null); });
+  poolMarkers = [];
+  selectedPoolMarker = null;
+}
+
+function showPoolMarkers(pool, displayedPlaces) {
+  clearPoolMarkers();
+  const displayedIds = new Set(displayedPlaces.map(function (p) { return p.place_id; }));
+  pool.forEach(function (place) {
+    if (!place.geometry || !place.geometry.location) return;
+    const isDisplayed = displayedIds.has(place.place_id);
+    const marker = new google.maps.Marker({
+      position: place.geometry.location,
+      map:      map,
+      title:    place.name,
+      icon:     isDisplayed ? greenRestaurantIcon() : orangeRestaurantIcon(),
+    });
+    poolMarkers.push({ marker: marker, placeId: place.place_id, isDisplayed: isDisplayed });
+  });
 }
 
 
