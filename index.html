@@ -15,7 +15,86 @@
     <header>
       <h1>Noorish</h1>
       <p>Got a trip coming up soon? Your one stop recommendation engine for your dietary needs</p>
+
+      <!-- Signed-out state -->
+      <div id="auth-signed-out" class="auth-header-widget">
+        <button id="auth-btn" class="auth-header-signin">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+          Sign In
+        </button>
+        <button id="auth-create-btn" class="auth-header-create">Create account</button>
+      </div>
+
+      <!-- Signed-in state -->
+      <div id="auth-signed-in" class="auth-header-widget hidden">
+        <button id="auth-menu-btn" class="auth-hamburger">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <div id="auth-user-menu" class="auth-user-menu hidden">
+          <div id="auth-user-name" class="auth-user-menu-name"></div>
+          <hr class="auth-menu-divider" />
+          <button id="auth-signout-btn" class="auth-signout-btn">Sign Out</button>
+        </div>
+      </div>
     </header>
+
+    <!-- Auth modal overlay -->
+    <div id="auth-overlay" class="auth-overlay hidden"></div>
+
+    <!-- Auth modal -->
+    <div id="auth-modal" class="auth-modal hidden">
+      <button id="auth-close-btn" class="auth-close-btn">✕</button>
+
+      <!-- Sign In view -->
+      <div id="auth-view-signin" class="auth-view">
+        <h2 class="auth-title">Welcome back</h2>
+        <button class="auth-google-btn">
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" />
+          Continue with Google
+        </button>
+        <div class="auth-divider"><span>or</span></div>
+        <input id="auth-signin-email"    class="auth-input" type="email"    placeholder="Email" />
+        <input id="auth-signin-password" class="auth-input" type="password" placeholder="Password" />
+        <div id="auth-error-signin" class="auth-error hidden"></div>
+        <button id="auth-signin-btn" class="auth-submit-btn">Sign In</button>
+        <div class="auth-footer">
+          <button id="auth-goto-reset" class="auth-link-btn">Forgot password?</button>
+          <span>·</span>
+          <button id="auth-goto-signup" class="auth-link-btn">Create account</button>
+        </div>
+      </div>
+
+      <!-- Sign Up view -->
+      <div id="auth-view-signup" class="auth-view hidden">
+        <h2 class="auth-title">Create account</h2>
+        <button class="auth-google-btn">
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" />
+          Continue with Google
+        </button>
+        <div class="auth-divider"><span>or</span></div>
+        <input id="auth-signup-name"     class="auth-input" type="text"     placeholder="Name (optional)" />
+        <input id="auth-signup-email"    class="auth-input" type="email"    placeholder="Email" />
+        <input id="auth-signup-password" class="auth-input" type="password" placeholder="Password (min 6 characters)" />
+        <div id="auth-error-signup" class="auth-error hidden"></div>
+        <button id="auth-signup-btn" class="auth-submit-btn">Create Account</button>
+        <div class="auth-footer">
+          <button id="auth-goto-signin" class="auth-link-btn">Already have an account? Sign in</button>
+        </div>
+      </div>
+
+      <!-- Password Reset view -->
+      <div id="auth-view-reset" class="auth-view hidden">
+        <h2 class="auth-title">Reset password</h2>
+        <p class="auth-subtitle">Enter your email and we'll send you a reset link.</p>
+        <input id="auth-reset-email" class="auth-input" type="email" placeholder="Email" />
+        <div id="auth-error-reset"   class="auth-error hidden"></div>
+        <div id="auth-success-reset" class="auth-success hidden"></div>
+        <button id="auth-reset-btn" class="auth-submit-btn">Send Reset Email</button>
+        <div class="auth-footer">
+          <button id="auth-back-signin" class="auth-link-btn">Back to sign in</button>
+        </div>
+      </div>
+    </div>
 
     <!-- NAV: tab bar linking to each section of the app -->
     <nav class="app-nav">
@@ -169,6 +248,7 @@
          loads first before JavaScript runs -->
     <!-- app.js must load BEFORE the Maps API so initMap() is defined in time -->
     <script src="app.js"></script>
+    <script type="module" src="auth.js"></script>
 
     <!-- Google Maps API — loads the map, places search, and geometry tools.
          "callback=initMap" tells Google to call our initMap() function

@@ -757,7 +757,7 @@ button#search-btn:disabled {
 
 /* Hide an element (JavaScript toggles this class on/off) */
 .hidden {
-  display: none;
+  display: none !important;
 }
 
 /* Show a loading spinner message */
@@ -1598,4 +1598,272 @@ footer {
   #map {
     height: 400px;
   }
+}
+
+
+/* =============================================
+   AUTH — header button, modal, avatar
+   ============================================= */
+
+/* Make the header relative so we can position the auth button inside it */
+header {
+  position: relative;
+}
+
+/* Widget container — positions both signed-out and signed-in states */
+.auth-header-widget {
+  position:        absolute;
+  top:             14px;
+  right:           20px;
+  display:         flex;
+  flex-direction:  column;
+  align-items:     flex-end;
+  gap:             4px;
+}
+
+/* Sign In pill button (signed-out state) */
+.auth-header-signin {
+  display:         flex;
+  align-items:     center;
+  gap:             7px;
+  background:      white;
+  color:           #2c5f2e;
+  border:          none;
+  border-radius:   20px;
+  padding:         6px 14px 6px 10px;
+  font-size:       0.85rem;
+  font-weight:     600;
+  cursor:          pointer;
+  line-height:     1;
+}
+
+.auth-header-signin:hover { background: #e8f2e8; }
+
+/* "Create account" link beneath the Sign In button */
+.auth-header-create {
+  background:  none;
+  border:      none;
+  color:       rgba(255, 255, 255, 0.8);
+  font-size:   0.75rem;
+  cursor:      pointer;
+  padding:     0;
+}
+
+.auth-header-create:hover { color: white; text-decoration: underline; }
+
+/* Hamburger button (signed-in state) */
+.auth-hamburger {
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  background:      white;
+  color:           #2c5f2e;
+  border:          none;
+  border-radius:   8px;
+  padding:         7px 9px;
+  cursor:          pointer;
+  line-height:     1;
+}
+
+.auth-hamburger:hover { background: #e8f2e8; }
+
+/* Dropdown menu under hamburger */
+.auth-user-menu {
+  position:      absolute;
+  top:           44px;
+  right:         0;
+  background:    white;
+  border:        1px solid #ddd;
+  border-radius: 10px;
+  padding:       12px 16px;
+  min-width:     190px;
+  box-shadow:    0 4px 16px rgba(0,0,0,0.12);
+  z-index:       1000;
+}
+
+.auth-user-menu-name {
+  font-size:  0.85rem;
+  color:      #555;
+  word-break: break-all;
+}
+
+.auth-menu-divider {
+  border:     none;
+  border-top: 1px solid #eee;
+  margin:     10px 0;
+}
+
+.auth-signout-btn {
+  width:         100%;
+  background:    #f4f4f4;
+  border:        1px solid #ddd;
+  border-radius: 6px;
+  padding:       7px 0;
+  font-size:     0.85rem;
+  cursor:        pointer;
+  color:         #333;
+}
+
+.auth-signout-btn:hover { background: #e8e8e8; }
+
+/* Full-screen dimmed overlay behind the modal */
+.auth-overlay {
+  position:   fixed;
+  inset:      0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index:    1100;
+}
+
+/* Modal card */
+.auth-modal {
+  position:      fixed;
+  top:           50%;
+  left:          50%;
+  transform:     translate(-50%, -50%);
+  background:    white;
+  border-radius: 14px;
+  padding:       36px 32px 28px;
+  width:         360px;
+  max-width:     90vw;
+  z-index:       1200;
+  box-shadow:    0 8px 32px rgba(0,0,0,0.18);
+}
+
+.auth-close-btn {
+  position:   absolute;
+  top:        14px;
+  right:      16px;
+  background: none;
+  border:     none;
+  font-size:  1.1rem;
+  color:      #999;
+  cursor:     pointer;
+  line-height: 1;
+}
+
+.auth-close-btn:hover { color: #333; }
+
+.auth-title {
+  font-size:     1.3rem;
+  font-weight:   700;
+  color:         #1a1a1a;
+  margin-bottom: 20px;
+  text-align:    center;
+}
+
+.auth-subtitle {
+  font-size:     0.9rem;
+  color:         #666;
+  margin-bottom: 16px;
+  text-align:    center;
+}
+
+/* Google sign-in button */
+.auth-google-btn {
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  gap:             10px;
+  width:           100%;
+  padding:         10px;
+  background:      white;
+  border:          1px solid #ddd;
+  border-radius:   8px;
+  font-size:       0.9rem;
+  font-weight:     500;
+  cursor:          pointer;
+  margin-bottom:   16px;
+}
+
+.auth-google-btn:hover { background: #f8f8f8; }
+
+.auth-google-btn img {
+  width:  18px;
+  height: 18px;
+}
+
+/* "or" divider */
+.auth-divider {
+  display:        flex;
+  align-items:    center;
+  gap:            10px;
+  margin-bottom:  16px;
+  color:          #bbb;
+  font-size:      0.8rem;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content:    "";
+  flex:       1;
+  height:     1px;
+  background: #e8e8e8;
+}
+
+/* Text inputs */
+.auth-input {
+  display:       block;
+  width:         100%;
+  padding:       10px 12px;
+  border:        1px solid #ddd;
+  border-radius: 8px;
+  font-size:     0.9rem;
+  margin-bottom: 10px;
+  box-sizing:    border-box;
+  outline:       none;
+}
+
+.auth-input:focus { border-color: #2c5f2e; }
+
+/* Error and success messages */
+.auth-error {
+  font-size:     0.82rem;
+  color:         #c0392b;
+  margin-bottom: 10px;
+}
+
+.auth-success {
+  font-size:     0.82rem;
+  color:         #2c5f2e;
+  margin-bottom: 10px;
+}
+
+/* Primary submit button */
+.auth-submit-btn {
+  width:         100%;
+  padding:       11px;
+  background:    #2c5f2e;
+  color:         white;
+  border:        none;
+  border-radius: 8px;
+  font-size:     0.95rem;
+  font-weight:   600;
+  cursor:        pointer;
+  margin-top:    4px;
+}
+
+.auth-submit-btn:hover { background: #234d24; }
+
+/* Footer links (sign up / forgot password) */
+.auth-footer {
+  display:         flex;
+  justify-content: center;
+  align-items:     center;
+  gap:             8px;
+  margin-top:      16px;
+  font-size:       0.82rem;
+  color:           #999;
+}
+
+.auth-link-btn {
+  background:  none;
+  border:      none;
+  color:       #2c5f2e;
+  font-size:   0.82rem;
+  cursor:      pointer;
+  padding:     0;
+  font-weight: 500;
+}
+
+.auth-link-btn:hover { text-decoration: underline; }
 }
