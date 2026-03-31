@@ -69,6 +69,10 @@ function initMap() {
   placesService = new google.maps.places.PlacesService(map);
 
   geocoder = new google.maps.Geocoder();
+
+  // Attach city autocomplete to the start and end inputs
+  new google.maps.places.Autocomplete(document.getElementById("start"), { types: ["(cities)"] });
+  new google.maps.places.Autocomplete(document.getElementById("end"),   { types: ["(cities)"] });
 }
 
 
@@ -85,6 +89,7 @@ const searchBtn = document.getElementById("search-btn");
 
 let currentMode    = "interval"; // "interval" or "custom"
 let customWaypoints = [];        // city strings the user has added in custom mode
+let waypointAutocomplete = null; // Google Places Autocomplete for the waypoint input
 
 const modeIntervalBtn   = document.getElementById("mode-interval-btn");
 const modeCustomBtn     = document.getElementById("mode-custom-btn");
@@ -108,7 +113,50 @@ modeCustomBtn.addEventListener("click", function () {
   modeIntervalBtn.classList.remove("mode-btn--active");
   waypointsSection.classList.remove("hidden");
   intervalSection.classList.add("hidden");
+  setupWaypointAutocomplete();
 });
+
+// Attach Google Places Autocomplete to the waypoint input, biased toward the
+// geographic area between the user's start and end cities.
+function setupWaypointAutocomplete() {
+  // Only set up once
+  if (waypointAutocomplete) return;
+
+  waypointAutocomplete = new google.maps.places.Autocomplete(waypointCityInput, {
+    types: ["(cities)"],  // cities only — no street addresses or businesses
+  });
+
+  // Bias the suggestions toward the route area if start/end are filled in
+  const startVal = document.getElementById("start").value.trim();
+  const endVal   = document.getElementById("end").value.trim();
+
+  if (startVal && endVal) {
+    // Geocode both cities and use their coordinates to set a bounding box
+    const bounds = new google.maps.LatLngBounds();
+    let resolved = 0;
+    [startVal, endVal].forEach(function (city) {
+      geocoder.geocode({ address: city }, function (results, status) {
+        if (status === "OK" && results[0]) {
+          bounds.extend(results[0].geometry.location);
+        }
+        resolved++;
+        if (resolved === 2) {
+          waypointAutocomplete.setBounds(bounds);
+        }
+      });
+    });
+  }
+
+  // When the user picks a city from the dropdown, add it to the list automatically
+  waypointAutocomplete.addListener("place_changed", function () {
+    const place = waypointAutocomplete.getPlace();
+    const cityName = place.name || waypointCityInput.value.trim();
+    if (!cityName) return;
+    customWaypoints.push(cityName);
+    waypointCityInput.value = "";
+    renderWaypointsList();
+  });
+}
 
 // Add a city to the list when the button is clicked …
 addWaypointBtn.addEventListener("click", function () {
@@ -541,7 +589,7 @@ function enrichWithHours(places, callback) {
     placesService.getDetails(
       {
         placeId: place.place_id,
-        fields:  ["opening_hours", "website"],
+        fields:  ["opening_hours", "website", "reviews", "editorial_summary"],
       },
       function (details, status) {
         if (
@@ -554,6 +602,12 @@ function enrichWithHours(places, callback) {
         if (status === google.maps.places.PlacesServiceStatus.OK && details.website) {
           place.website = details.website;
         }
+        if (status === google.maps.places.PlacesServiceStatus.OK && details.reviews) {
+          place.reviews = details.reviews;
+        }
+        if (status === google.maps.places.PlacesServiceStatus.OK && details.editorial_summary) {
+          place.editorial_summary = details.editorial_summary;
+        }
         enriched.push(place);
         index++;
         fetchNext();
@@ -565,17 +619,30 @@ function enrichWithHours(places, callback) {
 }
 
 
+// Returns true if the place's reviews or editorial summary mention any of the
+// selected dietary preferences. Used to show a "Mentioned in reviews" badge.
+function hasDietaryMention(place, diets) {
+  if (!diets || diets.length === 0) return false;
+  const text = [
+    place.editorial_summary && place.editorial_summary.overview,
+    ...(place.reviews || []).map(function (r) { return r.text; }),
+  ].filter(Boolean).join(" ").toLowerCase();
+  return diets.some(function (d) { return text.includes(d.toLowerCase()); });
+}
+
+
 // Returns a short label like "8 gluten free options" or "12 options".
 // Used in stop card headers so users can gauge options before opening.
 function buildCountLabel(count, selectedDiets) {
   if (!count) return "";
-  const suffix = count === 1 ? "option" : "options";
+  const display = count >= 20 ? "20+" : count;
+  const suffix  = count === 1 ? "option" : "options";
   if (selectedDiets.length === 1) {
-    return count + " " + selectedDiets[0] + " " + suffix;
+    return "🍴 " + display + " " + selectedDiets[0] + " " + suffix;
   } else if (selectedDiets.length > 1) {
-    return count + " " + suffix + " matching your preferences";
+    return "🍴 " + display + " " + suffix + " matching your preferences";
   }
-  return count + " " + suffix;
+  return "🍴 " + display + " " + suffix;
 }
 
 
@@ -682,6 +749,7 @@ function addStopCard(number, locationName, places, location, windowPoints, pool)
       row.innerHTML = `
         <div class="option-label">Option ${String.fromCharCode(65 + i)}</div>
         <div class="restaurant-name">${name}</div>
+        ${hasDietaryMention(place, currentSelectedDiets) ? '<span class="diet-mention-badge">⭐ Mentioned in reviews</span>' : ''}
         <div class="restaurant-address">${address}</div>
         <div class="restaurant-meta">
           <span class="rating">★ ${rating}</span>

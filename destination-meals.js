@@ -32,6 +32,9 @@ function initDestMeals() {
   placesService = new google.maps.places.PlacesService(
     document.getElementById("places-service-target")
   );
+
+  // Attach city autocomplete to the destination input
+  new google.maps.places.Autocomplete(document.getElementById("dest-city"), { types: ["(cities)"] });
 }
 
 // Called if the Maps API script fails to load (network error, bad key, etc.)
@@ -124,17 +127,6 @@ document.addEventListener("click", function (e) {
     dietMenu.setAttribute("hidden", "");
     dietDropdown.classList.remove("open");
   }
-});
-
-// Collapsible dietary group sections (the + / − button next to each heading)
-document.querySelectorAll(".diet-group-label").forEach(function (label) {
-  label.addEventListener("click", function () {
-    const options = label.nextElementSibling;
-    const btn     = label.querySelector(".diet-group-toggle");
-    const isOpen  = !options.classList.contains("collapsed");
-    options.classList.toggle("collapsed", isOpen);
-    btn.textContent = isOpen ? "+" : "−";
-  });
 });
 
 // Update the toggle button label to reflect what's selected
@@ -286,12 +278,14 @@ function enrichWithWebsite(places, location, pool, callback) {
 
     const place = places[index];
     placesService.getDetails(
-      { placeId: place.place_id, fields: ["website", "opening_hours", "formatted_address"] },
+      { placeId: place.place_id, fields: ["website", "opening_hours", "formatted_address", "reviews", "editorial_summary"] },
       function (details, status) {
         if (status === google.maps.places.PlacesServiceStatus.OK && details) {
-          if (details.website)           place.website           = details.website;
-          if (details.opening_hours)     place.opening_hours     = details.opening_hours;
-          if (details.formatted_address) place.formatted_address = details.formatted_address;
+          if (details.website)            place.website            = details.website;
+          if (details.opening_hours)      place.opening_hours      = details.opening_hours;
+          if (details.formatted_address)  place.formatted_address  = details.formatted_address;
+          if (details.reviews)            place.reviews            = details.reviews;
+          if (details.editorial_summary)  place.editorial_summary  = details.editorial_summary;
         }
         enriched.push(place);
         index++;
@@ -301,6 +295,18 @@ function enrichWithWebsite(places, location, pool, callback) {
   }
 
   fetchNext();
+}
+
+
+// Returns true if the place's reviews or editorial summary mention any of the
+// selected dietary preferences. Used to show a "Mentioned in reviews" badge.
+function hasDietaryMention(place, diets) {
+  if (!diets || diets.length === 0) return false;
+  const text = [
+    place.editorial_summary && place.editorial_summary.overview,
+    ...(place.reviews || []).map(function (r) { return r.text; }),
+  ].filter(Boolean).join(" ").toLowerCase();
+  return diets.some(function (d) { return text.includes(d.toLowerCase()); });
 }
 
 
@@ -348,6 +354,23 @@ function renderDestResults(restaurants, selectedDiets, pool, cityLocation) {
         return '<span class="diet-tag">' + capitalize(d) + '</span>';
       }).join("");
     card.appendChild(filterRow);
+  }
+
+  // Show total results count
+  if (pool && pool.length > 0) {
+    const countEl = document.createElement("div");
+    countEl.className = "stop-options-count";
+    const n       = pool.length;
+    const display = n >= 20 ? "20+" : n;
+    const suffix  = n === 1 ? "result" : "results";
+    if (selectedDiets.length === 1) {
+      countEl.textContent = "🍴 " + display + " " + selectedDiets[0] + " " + suffix + " found";
+    } else if (selectedDiets.length > 1) {
+      countEl.textContent = "🍴 " + display + " " + suffix + " matching your preferences";
+    } else {
+      countEl.textContent = "🍴 " + display + " " + suffix + " found";
+    }
+    card.appendChild(countEl);
   }
 
   // Container for the restaurant rows — replaced when "Show additional options" loads more
@@ -405,6 +428,7 @@ function renderDestResults(restaurants, selectedDiets, pool, cityLocation) {
       item.innerHTML =
         '<div class="option-label">Option ' + String.fromCharCode(65 + startLabel + i) + '</div>' +
         '<div class="flight-restaurant-name">' + name + '</div>' +
+        (hasDietaryMention(place, selectedDiets) ? '<span class="diet-mention-badge">⭐ Mentioned in reviews</span>' : '') +
         (address ? '<div class="restaurant-address">' + address + '</div>' : '') +
         '<div class="restaurant-meta">' +
           (rating  ? '<span class="rating">★ ' + rating + '</span>' : '') +

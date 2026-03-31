@@ -893,13 +893,14 @@ function parseTerminalInfo(address) {
 // Returns a short label like "8 gluten free options" or "12 options".
 function buildCountLabel(count, selectedDiets) {
   if (!count) return "";
-  const suffix = count === 1 ? "option" : "options";
+  const display = count >= 20 ? "20+" : count;
+  const suffix  = count === 1 ? "option" : "options";
   if (selectedDiets.length === 1) {
-    return count + " " + selectedDiets[0] + " " + suffix;
+    return "🍴 " + display + " " + selectedDiets[0] + " " + suffix;
   } else if (selectedDiets.length > 1) {
-    return count + " " + suffix + " matching your preferences";
+    return "🍴 " + display + " " + suffix + " matching your preferences";
   }
-  return count + " " + suffix;
+  return "🍴 " + display + " " + suffix;
 }
 
 

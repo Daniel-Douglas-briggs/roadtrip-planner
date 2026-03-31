@@ -735,10 +735,15 @@ button#search-btn:disabled {
 }
 
 .stop-options-count {
-  font-size: 0.78rem;
-  font-weight: 400;
-  color: #888;
-  margin-top: 2px;
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #5a5a5a;
+  background: #f4f4f4;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  padding: 2px 10px;
+  margin-top: 4px;
 }
 
 .stop-options-container--collapsed {
@@ -1138,6 +1143,18 @@ button#search-btn:disabled {
   border: 1px solid #c4ddc4;
 }
 
+.diet-mention-badge {
+  display: inline-block;
+  background: #fffbea;
+  color: #7a5c00;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 20px;
+  border: 1px solid #f0c940;
+  margin-bottom: 6px;
+}
+
 /* One restaurant row inside an airport card */
 .flight-restaurant-item {
   padding: 12px 0;
@@ -1423,10 +1440,15 @@ button#search-btn:disabled {
 }
 
 .flight-options-count {
-  font-size: 0.78rem;
-  font-weight: 400;
-  color: #888;
-  margin-top: 2px;
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #5a5a5a;
+  background: #f4f4f4;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  padding: 2px 10px;
+  margin-top: 4px;
 }
 
 .flight-airport-content--collapsed {
