@@ -865,25 +865,41 @@ button#search-btn:disabled {
   overflow: hidden;
 }
 
-/* Centered content column — fills the remaining height and scrolls internally,
-   so the header and nav tabs stay visible while the form scrolls */
+/* Side-by-side layout: form on the left, preview map on the right */
 .flight-main {
-  flex: 1;           /* grow to fill the space between the nav and footer */
-  min-height: 0;     /* lets flex children shrink below their natural height */
-  overflow-y: auto;  /* scroll the form content when it's taller than the window */
-  max-width: 640px;
-  margin: 0 auto;
-  padding: 40px 24px 60px;
-  width: 100%;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
-/* The white card that contains the form */
-.flight-card {
+/* Left column — scrollable form, mirrors the road trip sidebar */
+.flight-form-column {
+  width: 360px;
+  min-width: 300px;
   background: white;
-  border: 1px solid #e0e0d8;
-  border-radius: 12px;
-  padding: 32px;
+  padding: 24px;
+  overflow-y: auto;
+  border-right: 1px solid #ddd;
 }
+
+/* Right column — preview map fills remaining space */
+.flight-preview-map-panel {
+  flex: 1;
+  position: relative;
+}
+
+#flight-preview-map,
+#dest-preview-map {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  background: #e8ead9;
+}
+
+/* Keeps the mode-switching logic (used by CSS selectors below) but no card visuals */
+.flight-card {}
 
 /* Mode field visibility — driven by a class on the parent card.
    Only one mode div is visible at a time; CSS handles it entirely. */
@@ -891,6 +907,11 @@ button#search-btn:disabled {
 #route-mode-fields   { display: none; }
 .flight-card.mode-airport #airport-mode-fields { display: block; }
 .flight-card.mode-route   #route-mode-fields   { display: block; }
+
+#airport-mode-hint { display: none; }
+#route-mode-hint   { display: none; }
+.flight-card.mode-airport #airport-mode-hint { display: block; }
+.flight-card.mode-route   #route-mode-hint   { display: block; }
 
 /* Mode toggle tabs at the top of the card */
 .search-mode-tabs {
@@ -1597,6 +1618,27 @@ footer {
 
   #map {
     height: 400px;
+  }
+
+  .flight-main {
+    flex-direction: column;
+  }
+
+  .flight-form-column {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #e0e0d8;
+  }
+
+  .flight-preview-map-panel {
+    position: relative;
+    height: 300px;
+    flex: none;
+  }
+
+  #flight-preview-map,
+  #dest-preview-map {
+    position: absolute;
   }
 }
 

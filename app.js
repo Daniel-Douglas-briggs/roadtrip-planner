@@ -87,7 +87,7 @@ const searchBtn = document.getElementById("search-btn");
 // ── Stop mode toggle ──────────────────────────────────────────────────────────
 // Tracks whether the user wants auto interval stops or their own custom cities.
 
-let currentMode    = "interval"; // "interval" or "custom"
+let currentMode    = "custom"; // "interval" or "custom"
 let customWaypoints = [];        // city strings the user has added in custom mode
 let waypointAutocomplete = null; // Google Places Autocomplete for the waypoint input
 
@@ -101,16 +101,16 @@ const waypointsList     = document.getElementById("waypoints-list");
 
 modeIntervalBtn.addEventListener("click", function () {
   currentMode = "interval";
-  modeIntervalBtn.classList.add("mode-btn--active");
-  modeCustomBtn.classList.remove("mode-btn--active");
+  modeIntervalBtn.classList.add("mode-tab--active");
+  modeCustomBtn.classList.remove("mode-tab--active");
   intervalSection.classList.remove("hidden");
   waypointsSection.classList.add("hidden");
 });
 
 modeCustomBtn.addEventListener("click", function () {
   currentMode = "custom";
-  modeCustomBtn.classList.add("mode-btn--active");
-  modeIntervalBtn.classList.remove("mode-btn--active");
+  modeCustomBtn.classList.add("mode-tab--active");
+  modeIntervalBtn.classList.remove("mode-tab--active");
   waypointsSection.classList.remove("hidden");
   intervalSection.classList.add("hidden");
   setupWaypointAutocomplete();

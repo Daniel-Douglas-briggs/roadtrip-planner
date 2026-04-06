@@ -109,7 +109,8 @@
       <!-- LEFT PANEL: the form where users enter their trip details -->
       <section class="sidebar">
 
-        <h2>Plan Your Trip</h2>
+        <h2>Plan Your Road Trip Meals</h2>
+        <p class="flight-card-hint">Add your stops, set your dietary needs, and find restaurants along the way.</p>
 
         <!-- A "form" groups related inputs together -->
         <form id="trip-form">
@@ -137,14 +138,14 @@
           <!-- Stop planning mode toggle -->
           <div class="form-group">
             <label>How would you like to plan stops?</label>
-            <div class="mode-toggle">
-              <button type="button" class="mode-btn mode-btn--active" id="mode-interval-btn">Stop Every (miles)</button>
-              <button type="button" class="mode-btn" id="mode-custom-btn">Add My Own Stops</button>
+            <div class="search-mode-tabs">
+              <button type="button" class="mode-tab mode-tab--active" id="mode-custom-btn">📍 Add My Own Stops</button>
+              <button type="button" class="mode-tab" id="mode-interval-btn">🛣️ Stop Every (miles)</button>
             </div>
           </div>
 
           <!-- Interval input — visible when "Stop Every (miles)" is selected -->
-          <div class="form-group" id="interval-section">
+          <div class="form-group hidden" id="interval-section">
             <label for="interval">Stop every (miles)</label>
             <input
               type="number"
@@ -156,7 +157,7 @@
           </div>
 
           <!-- Custom stops — visible when "Add My Own Stops" is selected -->
-          <div class="form-group hidden" id="waypoints-section">
+          <div class="form-group" id="waypoints-section">
             <label>Your stops</label>
             <div class="waypoint-input-row">
               <input type="text" id="waypoint-city-input" placeholder="e.g. Memphis, TN" />

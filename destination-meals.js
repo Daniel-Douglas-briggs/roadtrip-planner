@@ -35,6 +35,16 @@ function initDestMeals() {
 
   // Attach city autocomplete to the destination input
   new google.maps.places.Autocomplete(document.getElementById("dest-city"), { types: ["(cities)"] });
+
+  // Show a default U.S. map before any search is run
+  new google.maps.Map(document.getElementById("dest-preview-map"), {
+    center:            { lat: 39.5, lng: -98.35 },
+    zoom:              4,
+    zoomControl:       true,
+    streetViewControl: false,
+    mapTypeControl:    false,
+    fullscreenControl: false,
+  });
 }
 
 // Called if the Maps API script fails to load (network error, bad key, etc.)

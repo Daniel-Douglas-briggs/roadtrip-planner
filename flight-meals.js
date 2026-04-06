@@ -44,6 +44,16 @@ function initFlightMeals() {
   placesService = new google.maps.places.PlacesService(
     document.getElementById("places-service-target")
   );
+
+  // Show a default U.S. map before any search is run
+  new google.maps.Map(document.getElementById("flight-preview-map"), {
+    center:           { lat: 39.5, lng: -98.35 },
+    zoom:             4,
+    zoomControl:      true,
+    streetViewControl: false,
+    mapTypeControl:   false,
+    fullscreenControl: false,
+  });
 }
 
 // Called if the Maps API script fails to load (network error, bad key, etc.)

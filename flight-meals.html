@@ -96,9 +96,13 @@
     <main class="flight-main" id="flight-main">
 
       <!-- ── STEP 1: Flight route input form ──────────────────────────────── -->
-      <section id="flight-form-section">
+      <section id="flight-form-section" class="flight-form-column">
 
         <div class="flight-card mode-airport">
+
+          <h2>Plan Your Flight Meals</h2>
+          <p class="flight-card-hint" id="airport-mode-hint">Enter any airport to browse food options there.</p>
+          <p class="flight-card-hint" id="route-mode-hint">Enter your route and any layover airports to find food options at each stop.</p>
 
           <!-- Mode toggle tabs -->
           <div class="search-mode-tabs">
@@ -110,8 +114,6 @@
 
             <!-- ── AIRPORT MODE: just one airport input ──────────────────────── -->
             <div id="airport-mode-fields">
-              <h2>Find Airport Restaurants</h2>
-              <p class="flight-card-hint">Enter any airport to browse food options there.</p>
               <div class="form-group">
                 <label for="airport-quick-input">Airport</label>
                 <input
@@ -126,8 +128,6 @@
 
             <!-- ── ROUTE MODE: departure, arrival, layovers ──────────────────── -->
             <div id="route-mode-fields">
-              <h2>Plan Your Flight Meals</h2>
-              <p class="flight-card-hint">Enter your route and any layover airports to find food options at each stop.</p>
 
               <div class="airport-row">
                 <div class="form-group">
@@ -201,6 +201,10 @@
 
       </section>
 
+      <!-- ── Preview map — shown before any search is run ────────────────── -->
+      <section class="flight-preview-map-panel">
+        <div id="flight-preview-map"></div>
+      </section>
 
     </main>
 
