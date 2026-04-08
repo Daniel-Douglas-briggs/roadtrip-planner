@@ -139,7 +139,7 @@ document.addEventListener("click", function (e) {
   }
 });
 
-// Update the toggle button label to reflect what's selected
+// Update the toggle button label to reflect what's selected, and auto-save if logged in
 dietMenu.addEventListener("change", function () {
   const checked = Array.from(dietMenu.querySelectorAll("input:checked"))
     .map(function (cb) { return cb.parentElement.textContent.trim(); });
@@ -150,6 +150,10 @@ dietMenu.addEventListener("change", function () {
   } else {
     dietToggleLabel.textContent = checked.length + " selected";
   }
+
+  const values = Array.from(dietMenu.querySelectorAll("input:checked"))
+    .map(function (cb) { return cb.value; });
+  if (window.savePreferences) window.savePreferences(values);
 });
 
 
@@ -179,6 +183,8 @@ destSearchBtn.addEventListener("click", function () {
   const selectedDiets = Array.from(dietMenu.querySelectorAll("input:checked"))
     .map(function (cb) { return cb.value; });
   const dietQuery = selectedDiets.join(" ");
+
+  if (window.setCurrentTrip) window.setCurrentTrip("Restaurants in " + cityInput, "destination");
 
   // Show loading state on the button while we wait for the geocoder
   destSearchBtn.disabled    = true;
@@ -435,7 +441,13 @@ function renderDestResults(restaurants, selectedDiets, pool, cityLocation) {
       const item = document.createElement("div");
       item.className = "flight-restaurant-item flight-restaurant-item--divider";
 
+      const pinned    = window.isPinned && window.isPinned(place.place_id);
+      const pinTitle  = pinned ? "Remove from My Trips" : "Save to My Trips";
+      const pinClass  = "pin-btn" + (pinned ? " pin-btn--pinned" : "");
+      const pinSvg    = '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>';
+
       item.innerHTML =
+        '<button class="' + pinClass + '" data-place-id="' + place.place_id + '" title="' + pinTitle + '">' + pinSvg + '</button>' +
         '<div class="option-label">Option ' + String.fromCharCode(65 + startLabel + i) + '</div>' +
         '<div class="flight-restaurant-name">' + name + '</div>' +
         (hasDietaryMention(place, selectedDiets) ? '<span class="diet-mention-badge">⭐ Mentioned in reviews</span>' : '') +
@@ -453,6 +465,20 @@ function renderDestResults(restaurants, selectedDiets, pool, cityLocation) {
           ? '<a class="restaurant-website" href="' + place.website + '" target="_blank" rel="noopener">Visit website ↗</a>'
           : '') +
         mapsLinksHTML;
+
+      const itemPinBtn = item.querySelector(".pin-btn");
+      if (itemPinBtn) {
+        itemPinBtn.addEventListener("click", function (e) {
+          e.stopPropagation();
+          if (window.togglePin) window.togglePin({
+            placeId: place.place_id,
+            name:    place.name,
+            address: address || "",
+            rating:  place.rating  || null,
+            website: place.website || null,
+          });
+        });
+      }
 
       optionsContainer.appendChild(item);
     });

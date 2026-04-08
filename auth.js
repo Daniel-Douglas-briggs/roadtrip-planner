@@ -19,12 +19,19 @@ import {
 const modal    = document.getElementById("auth-modal");
 const overlay  = document.getElementById("auth-overlay");
 
-function openModal(view) {
+function openModal(view, infoMessage) {
   showView(view || "signin");
   modal.classList.remove("hidden");
   overlay.classList.remove("hidden");
   clearErrors();
+  if (infoMessage) {
+    const infoEl = document.getElementById("auth-signin-info");
+    if (infoEl) { infoEl.textContent = infoMessage; infoEl.classList.remove("hidden"); }
+  }
 }
+
+// Exposed so other modules (e.g. trips.js) can open the auth modal
+window.openAuthModal = openModal;
 
 function closeModal() {
   modal.classList.add("hidden");
@@ -70,6 +77,8 @@ function clearErrors() {
     el.textContent = "";
     el.classList.add("hidden");
   });
+  const infoEl = document.getElementById("auth-signin-info");
+  if (infoEl) { infoEl.textContent = ""; infoEl.classList.add("hidden"); }
 }
 
 function clearInputs() {

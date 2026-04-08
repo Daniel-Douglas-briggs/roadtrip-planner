@@ -225,7 +225,7 @@ document.addEventListener("click", function (e) {
   }
 });
 
-// Update the summary label whenever a checkbox changes
+// Update the summary label whenever a checkbox changes, and auto-save if logged in
 dietMenu.addEventListener("change", function () {
   const checked = Array.from(dietMenu.querySelectorAll("input:checked"))
     .map(function (cb) { return cb.parentElement.textContent.trim(); });
@@ -236,6 +236,11 @@ dietMenu.addEventListener("change", function () {
   } else {
     dietToggleLabel.textContent = checked.length + " selected";
   }
+
+  // Save the raw values (not display names) to Firestore for the logged-in user
+  const values = Array.from(dietMenu.querySelectorAll("input:checked"))
+    .map(function (cb) { return cb.value; });
+  if (window.savePreferences) window.savePreferences(values);
 });
 
 
@@ -259,6 +264,9 @@ searchBtn.addEventListener("click", function () {
     showError("Please enter both a starting city and a destination.");
     return;
   }
+
+  // Set trip context for Phase 3 pinning
+  if (window.setCurrentTrip) window.setCurrentTrip("Road trip from " + start + " to " + end, "roadtrip");
 
   if (currentMode === "interval") {
     // ── Interval mode ──────────────────────────────────────────────────────
@@ -747,6 +755,11 @@ function addStopCard(number, locationName, places, location, windowPoints, pool)
       row.className = "restaurant-option" + (i < restaurantsToShow.length - 1 ? " restaurant-option--divider" : "");
       row.style.cursor = "pointer";
       row.innerHTML = `
+        <button class="pin-btn${window.isPinned && window.isPinned(place.place_id) ? ' pin-btn--pinned' : ''}"
+                data-place-id="${place.place_id}"
+                title="${window.isPinned && window.isPinned(place.place_id) ? 'Remove from My Trips' : 'Save to My Trips'}">
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+        </button>
         <div class="option-label">Option ${String.fromCharCode(65 + i)}</div>
         <div class="restaurant-name">${name}</div>
         ${hasDietaryMention(place, currentSelectedDiets) ? '<span class="diet-mention-badge">⭐ Mentioned in reviews</span>' : ''}
@@ -774,6 +787,21 @@ function addStopCard(number, locationName, places, location, windowPoints, pool)
           <a href="https://www.ubereats.com/search?q=${mapName}" target="_blank" rel="noopener" class="maps-link order-link">Uber Eats</a>
         </div>
       `;
+
+      // Pin button — stop propagation so clicking it doesn't also trigger the row click
+      const pinBtn = row.querySelector(".pin-btn");
+      if (pinBtn) {
+        pinBtn.addEventListener("click", function (e) {
+          e.stopPropagation();
+          if (window.togglePin) window.togglePin({
+            placeId: place.place_id,
+            name:    place.name,
+            address: address,
+            rating:  place.rating  || null,
+            website: place.website || null,
+          });
+        });
+      }
 
       const restaurantLocation = place.geometry.location;
       row.addEventListener("click", function () {

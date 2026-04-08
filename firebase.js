@@ -1,8 +1,9 @@
-// firebase.js — initialises Firebase once and exports the auth service.
+// firebase.js — initialises Firebase once and exports the auth + Firestore services.
 // Every page imports from here so there's only ever one Firebase app instance.
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
 import { getAuth }        from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
+import { getFirestore }   from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey:            "AIzaSyDsSArtuokjcQGitoT7cexHExXycadp_hQ",
@@ -15,3 +16,4 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
+export const db   = getFirestore(app);

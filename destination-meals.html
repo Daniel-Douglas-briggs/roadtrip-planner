@@ -28,8 +28,11 @@
         <button id="auth-menu-btn" class="auth-hamburger">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
         </button>
+        <button id="my-trips-nav-btn" class="my-trips-nav-btn-header my-trips-open-btn hidden">My Trips</button>
         <div id="auth-user-menu" class="auth-user-menu hidden">
           <div id="auth-user-name" class="auth-user-menu-name"></div>
+          <hr class="auth-menu-divider" />
+          <button class="auth-menu-item-btn my-trips-open-btn">My Trips</button>
           <hr class="auth-menu-divider" />
           <button id="auth-signout-btn" class="auth-signout-btn">Sign Out</button>
         </div>
@@ -46,6 +49,7 @@
           Continue with Google
         </button>
         <div class="auth-divider"><span>or</span></div>
+        <div id="auth-signin-info" class="auth-info hidden"></div>
         <input id="auth-signin-email"    class="auth-input" type="email"    placeholder="Email" />
         <input id="auth-signin-password" class="auth-input" type="password" placeholder="Password" />
         <div id="auth-error-signin" class="auth-error hidden"></div>
@@ -203,6 +207,18 @@
     <!-- PlacesService needs a DOM element to attach to -->
     <div id="places-service-target" hidden></div>
     <script type="module" src="auth.js"></script>
+    <script type="module" src="preferences.js"></script>
+    <script type="module" src="trips.js"></script>
+
+    <!-- My Trips slide-in panel -->
+    <div id="trips-overlay" class="trips-overlay hidden"></div>
+    <div id="trips-panel" class="trips-panel hidden">
+      <div class="trips-panel-header">
+        <h2 class="trips-panel-title">My Trips</h2>
+        <button id="trips-panel-close" class="trips-panel-close">✕</button>
+      </div>
+      <div id="trips-panel-body" class="trips-panel-body"></div>
+    </div>
 
   </body>
 </html>
