@@ -73,6 +73,51 @@ function initMap() {
   // Attach city autocomplete to the start and end inputs
   new google.maps.places.Autocomplete(document.getElementById("start"), { types: ["(cities)"] });
   new google.maps.places.Autocomplete(document.getElementById("end"),   { types: ["(cities)"] });
+
+  // Attach autocomplete to the "Your Stops" input on page load
+  // (it's visible by default, so we set it up immediately)
+  setupWaypointAutocomplete();
+
+  // Replay a saved trip search if URL params are present
+  const urlParams = new URLSearchParams(window.location.search);
+  const replayStart = urlParams.get("start");
+  const replayEnd   = urlParams.get("end");
+  if (replayStart && replayEnd) {
+    const replayMode     = urlParams.get("mode") || "custom";
+    const replayDiets    = urlParams.get("diets") ? urlParams.get("diets").split(",").filter(Boolean) : [];
+    const replayInterval = urlParams.get("interval");
+    const replayWaypoints = urlParams.get("waypoints") ? urlParams.get("waypoints").split("|").filter(Boolean) : [];
+
+    document.getElementById("start").value = replayStart;
+    document.getElementById("end").value   = replayEnd;
+
+    // Set mode
+    if (replayMode === "interval") {
+      modeIntervalBtn.click();
+      if (replayInterval) document.getElementById("interval").value = replayInterval;
+    } else {
+      modeCustomBtn.click();
+      customWaypoints = replayWaypoints;
+      renderWaypointsList();
+    }
+
+    // Check diet boxes
+    replayDiets.forEach(function (diet) {
+      const cb = dietMenu.querySelector('input[value="' + diet + '"]');
+      if (cb) cb.checked = true;
+    });
+    if (replayDiets.length === 0) {
+      dietToggleLabel.textContent = "None selected";
+    } else if (replayDiets.length <= 2) {
+      dietToggleLabel.textContent = replayDiets.map(function (d) {
+        return d.charAt(0).toUpperCase() + d.slice(1);
+      }).join(", ");
+    } else {
+      dietToggleLabel.textContent = replayDiets.length + " selected";
+    }
+
+    searchBtn.click();
+  }
 }
 
 
@@ -266,7 +311,18 @@ searchBtn.addEventListener("click", function () {
   }
 
   // Set trip context for Phase 3 pinning
-  if (window.setCurrentTrip) window.setCurrentTrip("Road trip from " + start + " to " + end, "roadtrip");
+  const searchParams = {
+    start: start,
+    end:   end,
+    mode:  currentMode,
+    diets: checkedDiets,
+  };
+  if (currentMode === "interval") {
+    searchParams.interval = parseInt(document.getElementById("interval").value, 10);
+  } else {
+    searchParams.waypoints = customWaypoints.slice();
+  }
+  if (window.setCurrentTrip) window.setCurrentTrip("Road trip from " + start + " to " + end, "roadtrip", searchParams);
 
   if (currentMode === "interval") {
     // ── Interval mode ──────────────────────────────────────────────────────
@@ -360,12 +416,13 @@ function planRoute(start, end, intervalMiles, diet) {
 function planRouteWithWaypoints(start, end, stopCities, diet) {
   directionsService.route(
     {
-      origin:      start,
-      destination: end,
-      waypoints:   stopCities.map(function (city) {
+      origin:            start,
+      destination:       end,
+      waypoints:         stopCities.map(function (city) {
         return { location: city, stopover: true };
       }),
-      travelMode: google.maps.TravelMode.DRIVING,
+      optimizeWaypoints: true,   // reorder stops into actual drive order
+      travelMode:        google.maps.TravelMode.DRIVING,
     },
     function (result, status) {
       if (status !== "OK") {
@@ -384,6 +441,12 @@ function planRouteWithWaypoints(start, end, stopCities, diet) {
         return sum + leg.distance.value;
       }, 0);
       const totalMiles = Math.round(totalMeters / 1609.34);
+
+      // Google may have reordered the stops — update the list to show drive order
+      if (route.waypoint_order && route.waypoint_order.length > 0) {
+        customWaypoints = route.waypoint_order.map(function (i) { return stopCities[i]; });
+        renderWaypointsList();
+      }
 
       // Each leg ends at one of the user's waypoint cities.
       // We skip the last leg because it ends at the destination, not a stop.

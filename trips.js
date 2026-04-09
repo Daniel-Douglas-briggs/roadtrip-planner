@@ -28,14 +28,16 @@ import {
 // Set when the user runs a search on any page. All pins made during this
 // session are grouped under this trip.
 
-let currentTripId    = null;
-let currentTripTitle = null;
-let currentTripType  = null;
+let currentTripId       = null;
+let currentTripTitle    = null;
+let currentTripType     = null;
+let currentSearchParams = null;
 
-window.setCurrentTrip = function (title, type) {
-  currentTripId    = "trip_" + Date.now();
-  currentTripTitle = title;
-  currentTripType  = type;
+window.setCurrentTrip = function (title, type, searchParams) {
+  currentTripId       = "trip_" + Date.now();
+  currentTripTitle    = title;
+  currentTripType     = type;
+  currentSearchParams = searchParams || null;
 };
 
 
@@ -94,10 +96,11 @@ async function pinRestaurant(uid, placeData) {
   } else {
     // First pin for this trip — create the trip document
     await setDoc(tripRef, {
-      title:       currentTripTitle,
-      type:        currentTripType,
-      createdAt:   new Date().toISOString(),
-      restaurants: [restaurant],
+      title:        currentTripTitle,
+      type:         currentTripType,
+      searchParams: currentSearchParams,
+      createdAt:    new Date().toISOString(),
+      restaurants:  [restaurant],
     });
   }
 }
@@ -127,12 +130,9 @@ async function unpinRestaurant(uid, placeId) {
 // When they sign out, clear everything and re-render the empty panel.
 
 onAuthStateChanged(auth, function (user) {
-  const navBtn = document.getElementById("my-trips-nav-btn");
   if (user) {
-    if (navBtn) navBtn.classList.remove("hidden");
     subscribeToTrips(user.uid);
   } else {
-    if (navBtn) navBtn.classList.add("hidden");
     if (unsubscribeTrips) unsubscribeTrips();
     tripsData      = {};
     pinnedPlaceIds = new Set();
@@ -212,6 +212,73 @@ document.querySelectorAll(".my-trips-open-btn").forEach(function (btn) {
 
 // ── Render the My Trips panel content ─────────────────────────────────────────
 
+// Tracks which trips the user has collapsed — persists while the panel is open
+const collapsedTrips = new Set();
+
+// Tracks which restaurant review boxes are open — persists across re-renders
+const expandedReviews = new Set();
+
+function capitalize(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+
+// Saves userRating / userReview changes for one restaurant inside a trip document.
+async function saveRestaurantUserData(uid, tripId, placeId, updates) {
+  const trip = tripsData[tripId];
+  if (!trip) return;
+  const newRestaurants = trip.restaurants.map(function (r) {
+    return r.placeId === placeId ? Object.assign({}, r, updates) : r;
+  });
+  await updateDoc(doc(db, "users", uid, "trips", tripId), { restaurants: newRestaurants });
+}
+
+
+// Builds a URL to replay a saved trip's original search.
+// Returns null for old trips that pre-date searchParams storage.
+function buildSearchUrl(trip) {
+  if (!trip.searchParams) return null;
+  const p = trip.searchParams;
+
+  if (trip.type === "destination") {
+    return "destination-meals.html?" + new URLSearchParams({
+      city:  p.city  || "",
+      diets: (p.diets || []).join(","),
+    });
+  }
+
+  if (trip.type === "roadtrip") {
+    const params = { start: p.start || "", end: p.end || "", mode: p.mode || "custom" };
+    if (p.mode === "interval") params.interval = p.interval || "";
+    if (p.mode === "custom" && p.waypoints && p.waypoints.length) {
+      params.waypoints = p.waypoints.join("|");
+    }
+    params.diets = (p.diets || []).join(",");
+    return "index.html?" + new URLSearchParams(params);
+  }
+
+  if (trip.type === "flight") {
+    if (p.flightMode === "airport") {
+      return "flight-meals.html?" + new URLSearchParams({
+        flightMode: "airport",
+        airport:    p.airport || "",
+        diets:      (p.diets || []).join(","),
+      });
+    }
+    if (p.flightMode === "route") {
+      return "flight-meals.html?" + new URLSearchParams({
+        flightMode: "route",
+        departure:  p.departure || "",
+        arrival:    p.arrival   || "",
+        layovers:   (p.layovers || []).join(","),
+        diets:      (p.diets   || []).join(","),
+      });
+    }
+  }
+
+  return null;
+}
+
 function renderTripsPanel() {
   const body = document.getElementById("trips-panel-body");
   if (!body) return;
@@ -237,6 +304,18 @@ function renderTripsPanel() {
     // ── Title row ──────────────────────────────────────────────────────────
     const titleRow  = document.createElement("div");
     titleRow.className = "trips-title-row";
+
+    const isCollapsed = collapsedTrips.has(tripId);
+
+    // Collapse/expand chevron button
+    const toggleBtn = document.createElement("button");
+    toggleBtn.className = "trips-toggle-btn";
+    toggleBtn.title     = isCollapsed ? "Expand" : "Collapse";
+    toggleBtn.innerHTML =
+      '<svg class="trips-chevron' + (isCollapsed ? " trips-chevron--collapsed" : "") + '" ' +
+      'xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" ' +
+      'fill="none" stroke="currentColor" stroke-width="2.5">' +
+      '<polyline points="6 9 12 15 18 9"/></svg>';
 
     const titleSpan = document.createElement("span");
     titleSpan.className   = "trips-title";
@@ -278,11 +357,15 @@ function renderTripsPanel() {
       });
     });
 
+    titleRow.appendChild(toggleBtn);
     titleRow.appendChild(titleSpan);
     titleRow.appendChild(editBtn);
     tripEl.appendChild(titleRow);
 
-    // ── Restaurant cards ────────────────────────────────────────────────────
+    // ── Restaurant cards (collapsible container) ────────────────────────────
+    const cardsContainer = document.createElement("div");
+    cardsContainer.className = "trips-cards" + (isCollapsed ? " trips-cards--collapsed" : "");
+
     (trip.restaurants || []).forEach(function (r) {
       const card = document.createElement("div");
       card.className = "trips-restaurant-card";
@@ -306,9 +389,178 @@ function renderTripsPanel() {
           : '');
 
       card.appendChild(unpinBtn);
-      tripEl.appendChild(card);
+
+      // ── User star rating ──────────────────────────────────────────────────
+      const starsRow = document.createElement("div");
+      starsRow.className = "trips-user-rating";
+
+      const starEls = [];
+      for (let v = 1; v <= 5; v++) {
+        const star = document.createElement("button");
+        star.type        = "button";
+        star.className   = "trips-star" + (v <= (r.userRating || 0) ? " trips-star--filled" : "");
+        star.textContent = "★";
+        star.title       = v + " star" + (v > 1 ? "s" : "");
+
+        // Hover: light up stars up to this value
+        star.addEventListener("mouseenter", (function (val) {
+          return function () {
+            starEls.forEach(function (s, i) {
+              s.classList.toggle("trips-star--hover", i < val);
+            });
+          };
+        })(v));
+
+        star.addEventListener("mouseleave", function () {
+          starEls.forEach(function (s) { s.classList.remove("trips-star--hover"); });
+        });
+
+        star.addEventListener("click", (function (val) {
+          return function () {
+            const uid = auth.currentUser && auth.currentUser.uid;
+            if (!uid) return;
+            // Clicking the current rating clears it
+            const newRating = (val === r.userRating) ? null : val;
+            saveRestaurantUserData(uid, tripId, r.placeId, { userRating: newRating });
+          };
+        })(v));
+
+        starEls.push(star);
+        starsRow.appendChild(star);
+      }
+
+      const ratingLabel = document.createElement("span");
+      ratingLabel.className   = "trips-rating-label";
+      ratingLabel.textContent = r.userRating ? "Your rating" : "Rate this";
+      starsRow.appendChild(ratingLabel);
+
+      card.appendChild(starsRow);
+
+      // ── Dietary certification ─────────────────────────────────────────────
+      const tripDiets = trip.searchParams && trip.searchParams.diets;
+      if (tripDiets && tripDiets.length > 0) {
+        const certRow = document.createElement("div");
+        certRow.className = "trips-cert-row";
+
+        tripDiets.forEach(function (diet) {
+          const certified = (r.certifiedDiets || []).includes(diet);
+          const btn = document.createElement("button");
+          btn.type      = "button";
+          btn.className = "trips-cert-btn" + (certified ? " trips-cert-btn--confirmed" : "");
+          btn.textContent = certified
+            ? "✓ " + capitalize(diet)
+            : capitalize(diet) + "?";
+          btn.title = certified
+            ? "Click to undo — mark as not confirmed"
+            : "Confirm this place had " + diet + " options";
+
+          btn.addEventListener("click", function () {
+            const uid = auth.currentUser && auth.currentUser.uid;
+            if (!uid) return;
+            const current = r.certifiedDiets || [];
+            const updated = certified
+              ? current.filter(function (d) { return d !== diet; })
+              : current.concat(diet);
+            saveRestaurantUserData(uid, tripId, r.placeId, { certifiedDiets: updated });
+          });
+
+          certRow.appendChild(btn);
+        });
+
+        card.appendChild(certRow);
+      }
+
+      // ── User review ───────────────────────────────────────────────────────
+      if (r.userReview) {
+        const reviewDisplay = document.createElement("div");
+        reviewDisplay.className   = "trips-review-display";
+        reviewDisplay.textContent = r.userReview;
+        card.appendChild(reviewDisplay);
+      }
+
+      const reviewToggle = document.createElement("button");
+      reviewToggle.type      = "button";
+      reviewToggle.className = "trips-review-toggle";
+      reviewToggle.textContent = r.userReview ? "Edit review" : "Write a review";
+
+      const reviewSection    = document.createElement("div");
+      const isReviewOpen     = expandedReviews.has(r.placeId);
+      reviewSection.className = "trips-review-section" + (isReviewOpen ? "" : " hidden");
+
+      const textarea = document.createElement("textarea");
+      textarea.className   = "trips-review-textarea";
+      textarea.placeholder = "Share your experience…";
+      textarea.value       = r.userReview || "";
+      textarea.rows        = 3;
+
+      // Prevent clicks inside the textarea from bubbling up (e.g. collapsing the trip)
+      textarea.addEventListener("click", function (e) { e.stopPropagation(); });
+
+      const saveReviewBtn = document.createElement("button");
+      saveReviewBtn.type        = "button";
+      saveReviewBtn.className   = "trips-review-save-btn";
+      saveReviewBtn.textContent = "Save";
+
+      saveReviewBtn.addEventListener("click", async function () {
+        const uid = auth.currentUser && auth.currentUser.uid;
+        if (!uid) return;
+        await saveRestaurantUserData(uid, tripId, r.placeId, {
+          userReview: textarea.value.trim() || null,
+        });
+        expandedReviews.delete(r.placeId);
+      });
+
+      reviewSection.appendChild(textarea);
+      reviewSection.appendChild(saveReviewBtn);
+
+      reviewToggle.addEventListener("click", function () {
+        if (expandedReviews.has(r.placeId)) {
+          expandedReviews.delete(r.placeId);
+          reviewSection.classList.add("hidden");
+        } else {
+          expandedReviews.add(r.placeId);
+          reviewSection.classList.remove("hidden");
+          textarea.focus();
+        }
+      });
+
+      card.appendChild(reviewToggle);
+      card.appendChild(reviewSection);
+
+      cardsContainer.appendChild(card);
     });
 
+    // Toggle collapse when the chevron or title is clicked
+    function toggleCollapse() {
+      const collapsed = collapsedTrips.has(tripId);
+      if (collapsed) {
+        collapsedTrips.delete(tripId);
+        cardsContainer.classList.remove("trips-cards--collapsed");
+        toggleBtn.title = "Collapse";
+        toggleBtn.querySelector(".trips-chevron").classList.remove("trips-chevron--collapsed");
+      } else {
+        collapsedTrips.add(tripId);
+        cardsContainer.classList.add("trips-cards--collapsed");
+        toggleBtn.title = "Expand";
+        toggleBtn.querySelector(".trips-chevron").classList.add("trips-chevron--collapsed");
+      }
+    }
+
+    toggleBtn.addEventListener("click", toggleCollapse);
+
+    const searchUrl = buildSearchUrl(trip);
+    if (searchUrl) {
+      titleSpan.classList.add("trips-title--link");
+      titleSpan.title = "Replay this search";
+      titleSpan.addEventListener("click", function () {
+        window.location.href = searchUrl;
+      });
+    } else {
+      // Old trips without searchParams — clicking title collapses instead
+      titleSpan.addEventListener("click", toggleCollapse);
+    }
+
+    tripEl.appendChild(cardsContainer);
     body.appendChild(tripEl);
   });
 }

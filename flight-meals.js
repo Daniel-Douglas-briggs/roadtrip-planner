@@ -54,6 +54,46 @@ function initFlightMeals() {
     mapTypeControl:   false,
     fullscreenControl: false,
   });
+
+  // Replay a saved trip search if URL params are present
+  const urlParams    = new URLSearchParams(window.location.search);
+  const replayMode   = urlParams.get("flightMode");
+  if (replayMode) {
+    const replayDiets = urlParams.get("diets") ? urlParams.get("diets").split(",").filter(Boolean) : [];
+
+    // Check diet boxes and update label
+    replayDiets.forEach(function (diet) {
+      const cb = dietMenu.querySelector('input[value="' + diet + '"]');
+      if (cb) cb.checked = true;
+    });
+    if (replayDiets.length === 0) {
+      dietToggleLabel.textContent = "None selected";
+    } else if (replayDiets.length <= 2) {
+      dietToggleLabel.textContent = replayDiets.map(function (d) {
+        return d.charAt(0).toUpperCase() + d.slice(1);
+      }).join(", ");
+    } else {
+      dietToggleLabel.textContent = replayDiets.length + " selected";
+    }
+
+    if (replayMode === "airport") {
+      tabAirport.click();
+      const airport = urlParams.get("airport") || "";
+      document.getElementById("airport-quick-input").value = airport;
+    } else if (replayMode === "route") {
+      tabRoute.click();
+      document.getElementById("departure").value = urlParams.get("departure") || "";
+      document.getElementById("arrival").value   = urlParams.get("arrival")   || "";
+      const replayLayovers = urlParams.get("layovers") ? urlParams.get("layovers").split(",").filter(Boolean) : [];
+      replayLayovers.forEach(function (code) {
+        addLayoverBtn.click();
+        const lastInput = layoversList.querySelector(".layover-row:last-child .layover-input");
+        if (lastInput) lastInput.value = code;
+      });
+    }
+
+    flightSearchBtn.click();
+  }
 }
 
 // Called if the Maps API script fails to load (network error, bad key, etc.)
@@ -341,9 +381,13 @@ function updateSuggestions() {
       li.className = "layover-row";
       li.innerHTML =
         '<span class="layover-label">Layover ' + layoverCount + '</span>' +
-        '<input class="airport-input layover-input" type="text" maxlength="3" value="' + airport.code + '" />' +
+        '<div class="layover-input-wrap">' +
+          '<input class="airport-input layover-input" type="text" value="' + airport.code + '" autocomplete="off" />' +
+          '<ul class="airport-dropdown hidden"></ul>' +
+        '</div>' +
         '<button type="button" class="layover-remove-btn" aria-label="Remove layover">×</button>';
       layoversList.appendChild(li);
+      setupAirportFieldEl(li.querySelector("input"), li.querySelector("ul"));
 
       updateAddLayoverBtn();
       updateSuggestions(); // refresh chips (removes this airport, disables if full)
@@ -427,10 +471,14 @@ addLayoverBtn.addEventListener("click", function () {
 
   li.innerHTML =
     '<span class="layover-label">Layover ' + layoverCount + '</span>' +
-    '<input class="airport-input layover-input" type="text" maxlength="3" placeholder="ORD" />' +
+    '<div class="layover-input-wrap">' +
+      '<input class="airport-input layover-input" type="text" placeholder="City or code (e.g. Chicago or ORD)" autocomplete="off" />' +
+      '<ul class="airport-dropdown hidden"></ul>' +
+    '</div>' +
     '<button type="button" class="layover-remove-btn" aria-label="Remove layover">×</button>';
 
   layoversList.appendChild(li);
+  setupAirportFieldEl(li.querySelector("input"), li.querySelector("ul"));
   updateAddLayoverBtn();
   li.querySelector("input").focus();
 });
@@ -454,16 +502,6 @@ function updateAddLayoverBtn() {
   addLayoverBtn.style.display = layoverCount >= MAX_LAYOVERS ? "none" : "inline-block";
 }
 
-// Auto-uppercase layover code inputs as the user types.
-// Departure and arrival are handled separately by setupAirportField() below,
-// since they accept city names (not just codes) while the user is typing.
-document.addEventListener("input", function (e) {
-  if (e.target.classList.contains("airport-input")) {
-    const pos = e.target.selectionStart;
-    e.target.value = e.target.value.toUpperCase();
-    e.target.setSelectionRange(pos, pos);
-  }
-});
 
 
 // ── Airport search typeahead ──────────────────────────────────────────────────
@@ -492,12 +530,17 @@ function searchAirports(query) {
 }
 
 // Wires up the city-name search typeahead for one airport input field.
-//   inputId    — id of the <input> element
-//   dropdownId — id of the <ul> that appears beneath it
+// Can be called with element IDs (for static fields) or DOM elements directly
+// (for dynamically-created layover rows).
 
 function setupAirportField(inputId, dropdownId) {
-  const input    = document.getElementById(inputId);
-  const dropdown = document.getElementById(dropdownId);
+  setupAirportFieldEl(
+    document.getElementById(inputId),
+    document.getElementById(dropdownId)
+  );
+}
+
+function setupAirportFieldEl(input, dropdown) {
 
   // Show/update dropdown as the user types
   input.addEventListener("input", function () {
@@ -605,7 +648,8 @@ flightSearchBtn.addEventListener("click", function () {
 
     if (window.setCurrentTrip) window.setCurrentTrip(
       "Restaurants at " + (knownAirport ? knownAirport.name : airportCode),
-      "flight"
+      "flight",
+      { flightMode: "airport", airport: airportCode, diets: selectedDiets }
     );
 
     currentDietQuery     = dietQuery;
@@ -691,7 +735,11 @@ flightSearchBtn.addEventListener("click", function () {
   });
   airportsToSearch.push({ code: arrival, role: "arrival" });
 
-  if (window.setCurrentTrip) window.setCurrentTrip("Flight meals: " + allAirports.join(" → "), "flight");
+  if (window.setCurrentTrip) window.setCurrentTrip(
+    "Flight meals: " + allAirports.join(" → "),
+    "flight",
+    { flightMode: "route", departure: departure, arrival: arrival, layovers: layovers, diets: selectedDiets }
+  );
 
   currentDietQuery     = dietQuery;
   currentSelectedDiets = selectedDiets;

@@ -36,6 +36,28 @@ function initDestMeals() {
   // Attach city autocomplete to the destination input
   new google.maps.places.Autocomplete(document.getElementById("dest-city"), { types: ["(cities)"] });
 
+  // Replay a saved trip search if URL params are present
+  const urlParams    = new URLSearchParams(window.location.search);
+  const replayCity   = urlParams.get("city");
+  if (replayCity) {
+    const replayDiets = urlParams.get("diets") ? urlParams.get("diets").split(",").filter(Boolean) : [];
+    document.getElementById("dest-city").value = replayCity;
+    replayDiets.forEach(function (diet) {
+      const cb = dietMenu.querySelector('input[value="' + diet + '"]');
+      if (cb) cb.checked = true;
+    });
+    if (replayDiets.length === 0) {
+      dietToggleLabel.textContent = "None selected";
+    } else if (replayDiets.length <= 2) {
+      dietToggleLabel.textContent = replayDiets.map(function (d) {
+        return d.charAt(0).toUpperCase() + d.slice(1);
+      }).join(", ");
+    } else {
+      dietToggleLabel.textContent = replayDiets.length + " selected";
+    }
+    destSearchBtn.click();
+  }
+
   // Show a default U.S. map before any search is run
   new google.maps.Map(document.getElementById("dest-preview-map"), {
     center:            { lat: 39.5, lng: -98.35 },
@@ -184,7 +206,11 @@ destSearchBtn.addEventListener("click", function () {
     .map(function (cb) { return cb.value; });
   const dietQuery = selectedDiets.join(" ");
 
-  if (window.setCurrentTrip) window.setCurrentTrip("Restaurants in " + cityInput, "destination");
+  if (window.setCurrentTrip) window.setCurrentTrip(
+    "Restaurants in " + cityInput,
+    "destination",
+    { city: cityInput, diets: selectedDiets }
+  );
 
   // Show loading state on the button while we wait for the geocoder
   destSearchBtn.disabled    = true;
