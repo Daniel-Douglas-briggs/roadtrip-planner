@@ -1051,6 +1051,28 @@ function renderAirportCard(cardIndex, code, restaurants, selectedDiets, error, l
     }
   });
 
+  // ── Teardrop pin factory (shared shape for all markers) ─────────────────
+  function makeTeardropIcon(fillColor, opts) {
+    opts = opts || {};
+    var scale = opts.scale || 1;
+    var label = opts.label || "";
+    var w = Math.round(24 * scale);
+    var h = Math.round(34 * scale);
+    var inner = label
+      ? '<text x="12" y="15" text-anchor="middle" dominant-baseline="middle" fill="white" font-size="11" font-weight="700" font-family="Arial,sans-serif">' + label + "</text>"
+      : '<circle cx="12" cy="11" r="3.5" fill="white" opacity="0.85"/>';
+    var svg =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="' + w + '" height="' + h + '" viewBox="0 0 24 34">' +
+      '<path d="M12 1C6.477 1 2 5.477 2 11c0 7 10 22 10 22s10-15 10-22C22 5.477 17.523 1 12 1z"' +
+      ' fill="' + fillColor + '" stroke="white" stroke-width="1.5"/>' +
+      inner + "</svg>";
+    return {
+      url:        "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg),
+      scaledSize: new google.maps.Size(w, h),
+      anchor:     new google.maps.Point(w / 2, h),
+    };
+  }
+
   // ── Shared map: drop a pin for each restaurant ───────────────────────────
   if (flightMap && location) {
     flightBounds.extend(location);
@@ -1062,6 +1084,7 @@ function renderAirportCard(cardIndex, code, restaurants, selectedDiets, error, l
         position: place.geometry.location,
         map:      flightMap,
         title:    place.name,
+        icon:     makeTeardropIcon("#D4870A", { scale: 1 }),
       });
 
       const infoWindow = new google.maps.InfoWindow({
@@ -1348,3 +1371,81 @@ function clearFlightError() {
   const existing = document.getElementById("flight-error");
   if (existing) existing.remove();
 }
+
+
+// ── Animated placeholder typewriter ──────────────────────────────────────────
+// Same coordinated stagger system as the road trip page.
+// Bar 1 (single airport) changes at 0, CYCLE_TIME, 2×CYCLE_TIME…
+// Bar 2 (departure) always 3 s after bar 1.
+// Bar 3 (arrival)   always 3 s after bar 2.
+
+const FLIGHT_PLACEHOLDER = {
+  single: [
+    "Chicago O'Hare — ORD", "Los Angeles — LAX", "Dallas/Fort Worth — DFW",
+    "Atlanta — ATL", "Denver — DEN", "Miami — MIA", "Seattle — SEA", "Austin — AUS"
+  ],
+  departure: [
+    "New York — JFK", "Chicago — ORD", "Los Angeles — LAX",
+    "Dallas — DFW", "Atlanta — ATL", "Boston — BOS", "Seattle — SEA", "Miami — MIA"
+  ],
+  arrival: [
+    "San Francisco — SFO", "Denver — DEN", "Nashville — BNA",
+    "Austin — AUS", "Portland — PDX", "New Orleans — MSY", "Phoenix — PHX", "Las Vegas — LAS"
+  ]
+};
+
+const FLIGHT_TYPE_SPEED   = 70;
+const FLIGHT_DELETE_SPEED = 35;
+const FLIGHT_STAGGER      = 3000;
+const FLIGHT_CYCLE_TIME   = 12000;
+
+function animateFlightPlaceholder(inputEl, newText) {
+  if (inputEl.value !== "") return;
+
+  let pos = inputEl.placeholder.length;
+
+  function erase() {
+    if (inputEl.value !== "") return;
+    if (pos > 0) {
+      pos--;
+      inputEl.placeholder = inputEl.placeholder.slice(0, pos);
+      setTimeout(erase, FLIGHT_DELETE_SPEED);
+    } else {
+      typeIn(0);
+    }
+  }
+
+  function typeIn(i) {
+    if (inputEl.value !== "") return;
+    if (i < newText.length) {
+      inputEl.placeholder = newText.slice(0, i + 1);
+      setTimeout(() => typeIn(i + 1), FLIGHT_TYPE_SPEED);
+    }
+  }
+
+  pos > 0 ? erase() : typeIn(0);
+}
+
+function startFlightPlaceholderCycle() {
+  const bars = [
+    { el: document.getElementById("airport-quick-input"), cities: FLIGHT_PLACEHOLDER.single,    index: 0 },
+    { el: document.getElementById("departure"),           cities: FLIGHT_PLACEHOLDER.departure, index: 0 },
+    { el: document.getElementById("arrival"),             cities: FLIGHT_PLACEHOLDER.arrival,   index: 0 },
+  ];
+
+  function runCycle() {
+    bars.forEach((bar, i) => {
+      setTimeout(() => {
+        if (bar.el && bar.el.value === "") {
+          animateFlightPlaceholder(bar.el, bar.cities[bar.index % bar.cities.length]);
+          bar.index++;
+        }
+      }, i * FLIGHT_STAGGER);
+    });
+  }
+
+  runCycle();
+  setInterval(runCycle, FLIGHT_CYCLE_TIME);
+}
+
+document.addEventListener("DOMContentLoaded", startFlightPlaceholderCycle);

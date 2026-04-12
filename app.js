@@ -57,6 +57,9 @@ function initMap() {
     zoom: 4,
     mapTypeControl: false,    // hide the Map/Satellite toggle (keeps it clean)
     streetViewControl: false, // hide the little orange pegman
+    fullscreenControlOptions: {
+      position: google.maps.ControlPosition.BOTTOM_RIGHT,
+    },
   });
 
   directionsService = new google.maps.DirectionsService();
@@ -974,6 +977,40 @@ function addNoResultCard(number, locationName) {
 }
 
 
+// ── Teardrop pin icon factory ─────────────────────────────────────────────────
+// Returns a Google Maps icon object using a classic teardrop SVG so every
+// marker on every page shares the same familiar pin shape.
+//
+// fillColor — hex string  e.g. "#D4870A"
+// opts.scale — size multiplier (default 1)
+// opts.label — short string drawn inside the pin (e.g. "1", "2")
+
+function makeTeardropIcon(fillColor, opts) {
+  opts = opts || {};
+  var scale = opts.scale || 1;
+  var label = opts.label || "";
+  var w = Math.round(24 * scale);
+  var h = Math.round(34 * scale);
+
+  var inner = label
+    ? '<text x="12" y="15" text-anchor="middle" dominant-baseline="middle" fill="white" font-size="11" font-weight="700" font-family="Arial,sans-serif">' + label + "</text>"
+    : '<circle cx="12" cy="11" r="3.5" fill="white" opacity="0.85"/>';
+
+  var svg =
+    '<svg xmlns="http://www.w3.org/2000/svg" width="' + w + '" height="' + h + '" viewBox="0 0 24 34">' +
+    '<path d="M12 1C6.477 1 2 5.477 2 11c0 7 10 22 10 22s10-15 10-22C22 5.477 17.523 1 12 1z"' +
+    ' fill="' + fillColor + '" stroke="white" stroke-width="1.5"/>' +
+    inner +
+    "</svg>";
+
+  return {
+    url:        "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg),
+    scaledSize: new google.maps.Size(w, h),
+    anchor:     new google.maps.Point(w / 2, h),
+  };
+}
+
+
 // ── Map marker helpers ────────────────────────────────────────────────────────
 
 function addMarker(location, number, title) {
@@ -981,19 +1018,7 @@ function addMarker(location, number, title) {
     position: location,
     map:      map,
     title:    title,
-    label: {
-      text:       String(number),
-      color:      "white",
-      fontWeight: "bold",
-    },
-    icon: {
-      path:        google.maps.SymbolPath.CIRCLE,
-      scale:       16,
-      fillColor:   "#2c5f2e",
-      fillOpacity: 1,
-      strokeColor: "white",
-      strokeWeight: 2,
-    },
+    icon:     makeTeardropIcon("#1A1A2E", { scale: 1.15, label: String(number) }),
   });
   markers.push(marker);
 }
@@ -1019,14 +1044,7 @@ function addRestaurantMarker(location, title, stopNumber) {
     position: location,
     map:      map,
     title:    title,
-    icon: {
-      path:        google.maps.SymbolPath.CIRCLE,
-      scale:       10,
-      fillColor:   "#f4a261",  // orange — distinct from the green stop pins
-      fillOpacity: 1,
-      strokeColor: "white",
-      strokeWeight: 2,
-    },
+    icon:     makeTeardropIcon("#D4870A", { scale: 1 }),
   });
 
   marker.stopNumber = stopNumber; // tag it so we can replace it later
@@ -1044,25 +1062,11 @@ function clearRestaurantMarkers() {
 // Clicking a row turns that pin into a yellow star.
 
 function greenRestaurantIcon() {
-  return {
-    path: google.maps.SymbolPath.CIRCLE,
-    scale: 9,
-    fillColor: "#2c5f2e",
-    fillOpacity: 1,
-    strokeColor: "white",
-    strokeWeight: 2,
-  };
+  return makeTeardropIcon("#D4870A", { scale: 0.9 });
 }
 
 function orangeRestaurantIcon() {
-  return {
-    path: google.maps.SymbolPath.CIRCLE,
-    scale: 7,
-    fillColor: "#f4a261",
-    fillOpacity: 1,
-    strokeColor: "white",
-    strokeWeight: 1.5,
-  };
+  return makeTeardropIcon("#C8705A", { scale: 0.75 });
 }
 
 function yellowStarIcon() {
@@ -1296,3 +1300,81 @@ function addCustomStopCard(locationName, places, location) {
   stopsList.appendChild(li);
   addMarker(location, "★", locationName);
 }
+
+
+// ── Animated placeholder typewriter ──────────────────────────────────────────
+// A single coordinator fires every CYCLE_TIME ms.
+// Bar 1 changes immediately, bar 2 changes STAGGER ms later, bar 3 STAGGER*2 ms later.
+// This keeps the 3-second gap permanently — it never drifts.
+
+const PLACEHOLDER_CITIES = {
+  start: [
+    "Nashville, Tennessee", "Atlanta, Georgia", "Denver, Colorado", "Dallas, Texas",
+    "Chicago, Illinois", "Phoenix, Arizona", "Houston, Texas", "Miami, Florida",
+    "Seattle, Washington", "Charlotte, North Carolina", "Austin, Texas", "Portland, Oregon"
+  ],
+  end: [
+    "Lake Tahoe, California", "Savannah, Georgia", "Yellowstone, Wyoming", "Sedona, Arizona",
+    "Asheville, North Carolina", "Santa Fe, New Mexico", "Moab, Utah", "Bar Harbor, Maine",
+    "Napa Valley, California", "Telluride, Colorado", "Key West, Florida", "Glacier, Montana"
+  ],
+  waypoint: [
+    "Memphis, Tennessee", "Chattanooga, Tennessee", "Flagstaff, Arizona", "Boise, Idaho",
+    "Tulsa, Oklahoma", "Knoxville, Tennessee", "Springfield, Missouri", "El Paso, Texas",
+    "Albuquerque, New Mexico", "Shreveport, Louisiana", "Columbia, South Carolina", "Reno, Nevada"
+  ]
+};
+
+const TYPE_SPEED   = 70;    // ms per character when typing
+const DELETE_SPEED = 35;    // ms per character when deleting
+const STAGGER      = 3000;  // ms between each bar's turn
+const CYCLE_TIME   = 12000; // ms between each bar's own successive changes
+
+function animatePlaceholderChange(inputEl, newText) {
+  if (inputEl.value !== "") return; // user is typing — leave it alone
+
+  let pos = inputEl.placeholder.length;
+
+  function erase() {
+    if (inputEl.value !== "") return;
+    if (pos > 0) {
+      pos--;
+      inputEl.placeholder = inputEl.placeholder.slice(0, pos);
+      setTimeout(erase, DELETE_SPEED);
+    } else {
+      typeIn(0);
+    }
+  }
+
+  function typeIn(i) {
+    if (inputEl.value !== "") return;
+    if (i < newText.length) {
+      inputEl.placeholder = newText.slice(0, i + 1);
+      setTimeout(() => typeIn(i + 1), TYPE_SPEED);
+    }
+  }
+
+  pos > 0 ? erase() : typeIn(0);
+}
+
+function startCoordinatedCycle() {
+  const bars = [
+    { el: document.getElementById("start"),               cities: PLACEHOLDER_CITIES.start,    index: 0 },
+    { el: document.getElementById("end"),                 cities: PLACEHOLDER_CITIES.end,      index: 0 },
+    { el: document.getElementById("waypoint-city-input"), cities: PLACEHOLDER_CITIES.waypoint, index: 0 },
+  ];
+
+  function runCycle() {
+    bars.forEach((bar, i) => {
+      setTimeout(() => {
+        animatePlaceholderChange(bar.el, bar.cities[bar.index % bar.cities.length]);
+        bar.index++;
+      }, i * STAGGER);
+    });
+  }
+
+  runCycle();
+  setInterval(runCycle, CYCLE_TIME);
+}
+
+document.addEventListener("DOMContentLoaded", startCoordinatedCycle);

@@ -4,40 +4,57 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Destination Meals</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600;12..96,700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="style.css" />
   </head>
 
   <body class="flight-page">
 
-    <!-- HEADER -->
-    <header>
-      <h1>Noorish</h1>
-      <p>Got a trip coming up soon? Your one stop recommendation engine for your dietary needs</p>
-
-      <!-- Signed-out state -->
-      <div id="auth-signed-out" class="auth-header-widget">
-        <button id="auth-btn" class="auth-header-signin">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-          Sign In
-        </button>
-        <button id="auth-create-btn" class="auth-header-create">Create account</button>
+    <nav class="app-nav">
+      <!-- Logo — far left -->
+      <div class="nav-brand">
+        <h1>N<svg class="logo-oo" viewBox="0 0 56 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M13 1C7.5 1 3 5.5 3 11c0 6.5 10 20 10 20s10-13.5 10-20c0-5.5-4.5-10-10-10z" fill="currentColor"/><circle cx="13" cy="11" r="3.5" fill="var(--color-ink-mid)"/><path d="M43 1C37.5 1 33 5.5 33 11c0 6.5 10 20 10 20s10-13.5 10-20c0-5.5-4.5-10-10-10z" fill="currentColor"/><circle cx="43" cy="11" r="3.5" fill="var(--color-ink-mid)"/></svg>rish</h1>
       </div>
 
-      <!-- Signed-in state -->
-      <div id="auth-signed-in" class="auth-header-widget hidden">
-        <button id="auth-menu-btn" class="auth-hamburger">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-        </button>
+      <!-- Tabs — centred -->
+      <div class="nav-tabs">
+        <a href="index.html" class="nav-tab">Road Trip Meals</a>
+        <a href="flight-meals.html" class="nav-tab">Flight Meals</a>
+        <a href="destination-meals.html" class="nav-tab nav-tab--active">Destination Meals</a>
+      </div>
 
-        <div id="auth-user-menu" class="auth-user-menu hidden">
-          <div id="auth-user-name" class="auth-user-menu-name"></div>
-          <hr class="auth-menu-divider" />
-          <button class="auth-menu-item-btn my-trips-open-btn">My Trips</button>
-          <hr class="auth-menu-divider" />
-          <button id="auth-signout-btn" class="auth-signout-btn">Sign Out</button>
+      <!-- Auth — far right -->
+      <div class="nav-auth">
+        <div id="auth-signed-out" class="auth-header-widget">
+          <button id="auth-btn" class="auth-header-signin">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+            Sign In
+          </button>
+          <button id="auth-create-btn" class="auth-header-create">Create account</button>
+        </div>
+        <div id="auth-signed-in" class="auth-header-widget hidden">
+          <button id="auth-menu-btn" class="auth-hamburger">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+          <div id="auth-user-menu" class="auth-user-menu hidden">
+            <div id="auth-user-name" class="auth-user-menu-name"></div>
+            <hr class="auth-menu-divider" />
+            <button class="auth-menu-item-btn my-trips-open-btn">My Trips</button>
+            <hr class="auth-menu-divider" />
+            <div class="theme-toggle-row">
+              <span class="theme-toggle-label">Dark mode</span>
+              <button class="theme-toggle-btn" aria-label="Toggle dark mode" aria-pressed="false">
+                <span class="theme-toggle-thumb"></span>
+              </button>
+            </div>
+            <hr class="auth-menu-divider" />
+            <button id="auth-signout-btn" class="auth-signout-btn">Sign Out</button>
+          </div>
         </div>
       </div>
-    </header>
+    </nav>
 
     <div id="auth-overlay" class="auth-overlay hidden"></div>
     <div id="auth-modal" class="auth-modal hidden">
@@ -89,14 +106,6 @@
       </div>
     </div>
 
-    <!-- NAV: Destination Meals is the active tab on this page -->
-    <nav class="app-nav">
-      <a href="index.html" class="nav-tab">🗺️ Road Trip Meals</a>
-      <a href="flight-meals.html" class="nav-tab">✈️ Flight Meals</a>
-      <a href="destination-meals.html" class="nav-tab nav-tab--active">📍 Destination Meals</a>
-    </nav>
-
-
     <!-- ── STEP 1: City + dietary preference form ──────────────────────────── -->
     <main class="flight-main" id="dest-main">
 
@@ -114,7 +123,7 @@
               <input
                 type="text"
                 id="dest-city"
-                placeholder="e.g. Austin, TX"
+                placeholder="Austin, Texas"
                 autocomplete="off"
               />
             </div>
@@ -147,6 +156,13 @@
             </div>
 
             <button type="button" id="dest-search-btn">Find Meal Options</button>
+
+            <div class="theme-toggle-row">
+              <span class="theme-toggle-label">Dark mode</span>
+              <button class="theme-toggle-btn" aria-label="Toggle dark mode" aria-pressed="false">
+                <span class="theme-toggle-thumb"></span>
+              </button>
+            </div>
 
           </form>
 
@@ -193,6 +209,7 @@
 
     <!-- destination-meals.js must load BEFORE the Maps API so initDestMeals()
          is defined in time for Google to call it -->
+    <script src="theme.js"></script>
     <script src="destination-meals.js"></script>
 
     <!-- Google Maps API — same key as the other pages.

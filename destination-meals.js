@@ -358,6 +358,28 @@ function renderDestResults(restaurants, selectedDiets, pool, cityLocation) {
   const card = document.getElementById("dest-results-card");
   if (!card || restaurants.length === 0) return;
 
+  // ── Teardrop pin factory (shared shape for all markers) ─────────────────
+  function makeTeardropIcon(fillColor, opts) {
+    opts = opts || {};
+    var scale = opts.scale || 1;
+    var label = opts.label || "";
+    var w = Math.round(24 * scale);
+    var h = Math.round(34 * scale);
+    var inner = label
+      ? '<text x="12" y="15" text-anchor="middle" dominant-baseline="middle" fill="white" font-size="11" font-weight="700" font-family="Arial,sans-serif">' + label + "</text>"
+      : '<circle cx="12" cy="11" r="3.5" fill="white" opacity="0.85"/>';
+    var svg =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="' + w + '" height="' + h + '" viewBox="0 0 24 34">' +
+      '<path d="M12 1C6.477 1 2 5.477 2 11c0 7 10 22 10 22s10-15 10-22C22 5.477 17.523 1 12 1z"' +
+      ' fill="' + fillColor + '" stroke="white" stroke-width="1.5"/>' +
+      inner + "</svg>";
+    return {
+      url:        "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg),
+      scaledSize: new google.maps.Size(w, h),
+      anchor:     new google.maps.Point(w / 2, h),
+    };
+  }
+
   // Drop a pin on the map for each restaurant
   restaurants.forEach(function (place) {
     if (!place.geometry || !place.geometry.location) return;
@@ -366,6 +388,7 @@ function renderDestResults(restaurants, selectedDiets, pool, cityLocation) {
       position: place.geometry.location,
       map:      destMap,
       title:    place.name,
+      icon:     makeTeardropIcon("#D4870A", { scale: 1 }),
     });
 
     const infoWindow = new google.maps.InfoWindow({
@@ -542,6 +565,7 @@ function renderDestResults(restaurants, selectedDiets, pool, cityLocation) {
             position: place.geometry.location,
             map:      destMap,
             title:    place.name,
+            icon:     makeTeardropIcon("#D4870A", { scale: 1 }),
           });
 
           const infoWindow = new google.maps.InfoWindow({
@@ -600,3 +624,62 @@ function clearDestError() {
   const existing = document.getElementById("dest-error");
   if (existing) existing.remove();
 }
+
+
+// ── Animated placeholder typewriter ──────────────────────────────────────────
+
+const DEST_PLACEHOLDER_CITIES = [
+  "Austin, Texas", "Savannah, Georgia", "Asheville, North Carolina", "Santa Fe, New Mexico",
+  "Sedona, Arizona", "Charleston, South Carolina", "New Orleans, Louisiana", "Portland, Oregon",
+  "Marfa, Texas", "Carmel, California"
+];
+
+function startDestPlaceholderCycle() {
+  const inputEl = document.getElementById("dest-city");
+  if (!inputEl) return;
+
+  const cities      = DEST_PLACEHOLDER_CITIES;
+  let cityIndex  = 0;
+  let charIndex  = 0;
+  let isDeleting = false;
+
+  const TYPE_SPEED   = 70;
+  const DELETE_SPEED = 35;
+  const PAUSE_AFTER  = 6000;
+
+  function tick() {
+    if (inputEl.value !== "") {
+      setTimeout(tick, 500);
+      return;
+    }
+
+    const currentCity = cities[cityIndex];
+
+    if (!isDeleting) {
+      charIndex++;
+      inputEl.placeholder = currentCity.slice(0, charIndex);
+
+      if (charIndex === currentCity.length) {
+        isDeleting = true;
+        setTimeout(tick, PAUSE_AFTER);
+        return;
+      }
+      setTimeout(tick, TYPE_SPEED);
+    } else {
+      charIndex--;
+      inputEl.placeholder = currentCity.slice(0, charIndex);
+
+      if (charIndex === 0) {
+        isDeleting = false;
+        cityIndex = (cityIndex + 1) % cities.length;
+        setTimeout(tick, TYPE_SPEED);
+        return;
+      }
+      setTimeout(tick, DELETE_SPEED);
+    }
+  }
+
+  setTimeout(tick, 0);
+}
+
+document.addEventListener("DOMContentLoaded", startDestPlaceholderCycle);

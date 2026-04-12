@@ -6,40 +6,64 @@
     <title>Road Trip Planner</title>
 
     <!-- This line loads our style.css file so the page looks good -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600;12..96,700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="style.css" />
   </head>
 
   <body>
 
-    <!-- HEADER: the top banner with the app name -->
-    <header>
-      <h1>Noorish</h1>
-      <p>Got a trip coming up soon? Your one stop recommendation engine for your dietary needs</p>
-
-      <!-- Signed-out state -->
-      <div id="auth-signed-out" class="auth-header-widget">
-        <button id="auth-btn" class="auth-header-signin">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-          Sign In
-        </button>
-        <button id="auth-create-btn" class="auth-header-create">Create account</button>
+    <nav class="app-nav">
+      <!-- Logo — far left -->
+      <div class="nav-brand">
+        <h1>N<svg class="logo-oo" viewBox="0 0 72 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect x="18" y="2" width="36" height="10" rx="5" stroke="currentColor" stroke-width="2"/>
+          <rect x="3" y="10" width="66" height="11" rx="2" stroke="currentColor" stroke-width="2"/>
+          <circle cx="16" cy="26" r="8" stroke="currentColor" stroke-width="2"/>
+          <circle cx="16" cy="26" r="3" fill="currentColor"/>
+          <circle cx="56" cy="26" r="8" stroke="currentColor" stroke-width="2"/>
+          <circle cx="56" cy="26" r="3" fill="currentColor"/>
+        </svg>rish</h1>
       </div>
 
-      <!-- Signed-in state -->
-      <div id="auth-signed-in" class="auth-header-widget hidden">
-        <button id="auth-menu-btn" class="auth-hamburger">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-        </button>
+      <!-- Tabs — centred -->
+      <div class="nav-tabs">
+        <a href="index.html" class="nav-tab nav-tab--active">Road Trip Meals</a>
+        <a href="flight-meals.html" class="nav-tab">Flight Meals</a>
+        <a href="destination-meals.html" class="nav-tab">Destination Meals</a>
+      </div>
 
-        <div id="auth-user-menu" class="auth-user-menu hidden">
-          <div id="auth-user-name" class="auth-user-menu-name"></div>
-          <hr class="auth-menu-divider" />
-          <button class="auth-menu-item-btn my-trips-open-btn">My Trips</button>
-          <hr class="auth-menu-divider" />
-          <button id="auth-signout-btn" class="auth-signout-btn">Sign Out</button>
+      <!-- Auth — far right -->
+      <div class="nav-auth">
+        <div id="auth-signed-out" class="auth-header-widget">
+          <button id="auth-btn" class="auth-header-signin">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+            Sign In
+          </button>
+          <button id="auth-create-btn" class="auth-header-create">Create account</button>
+        </div>
+        <div id="auth-signed-in" class="auth-header-widget hidden">
+          <button id="auth-menu-btn" class="auth-hamburger">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+          <div id="auth-user-menu" class="auth-user-menu hidden">
+            <div id="auth-user-name" class="auth-user-menu-name"></div>
+            <hr class="auth-menu-divider" />
+            <button class="auth-menu-item-btn my-trips-open-btn">My Trips</button>
+            <hr class="auth-menu-divider" />
+            <div class="theme-toggle-row">
+              <span class="theme-toggle-label">Dark mode</span>
+              <button class="theme-toggle-btn" aria-label="Toggle dark mode" aria-pressed="false">
+                <span class="theme-toggle-thumb"></span>
+              </button>
+            </div>
+            <hr class="auth-menu-divider" />
+            <button id="auth-signout-btn" class="auth-signout-btn">Sign Out</button>
+          </div>
         </div>
       </div>
-    </header>
+    </nav>
 
     <!-- Auth modal overlay -->
     <div id="auth-overlay" class="auth-overlay hidden"></div>
@@ -100,13 +124,6 @@
       </div>
     </div>
 
-    <!-- NAV: tab bar linking to each section of the app -->
-    <nav class="app-nav">
-      <a href="index.html" class="nav-tab nav-tab--active">🗺️ Road Trip Meals</a>
-      <a href="flight-meals.html" class="nav-tab">✈️ Flight Meals</a>
-      <a href="destination-meals.html" class="nav-tab">📍 Destination Meals</a>
-    </nav>
-
     <!-- MAIN CONTENT: split into left panel (form) and right panel (map) -->
     <main>
 
@@ -125,7 +142,7 @@
             <input
               type="text"
               id="start"
-              placeholder="e.g. Nashville, TN"
+              placeholder="Nashville, Tennessee"
             />
           </div>
 
@@ -135,7 +152,7 @@
             <input
               type="text"
               id="end"
-              placeholder="e.g. Sedona, AZ"
+              placeholder="Sedona, Arizona"
             />
           </div>
 
@@ -164,7 +181,7 @@
           <div class="form-group" id="waypoints-section">
             <label>Your stops</label>
             <div class="waypoint-input-row">
-              <input type="text" id="waypoint-city-input" placeholder="e.g. Memphis, TN" />
+              <input type="text" id="waypoint-city-input" placeholder="Memphis, Tennessee" />
               <button type="button" id="add-waypoint-btn">Add</button>
             </div>
             <ul id="waypoints-list"></ul>
@@ -200,6 +217,13 @@
           <!-- The big button that kicks everything off -->
           <button type="button" id="search-btn">Find Meal Options</button>
 
+          <div class="theme-toggle-row">
+            <span class="theme-toggle-label">Dark mode</span>
+            <button class="theme-toggle-btn" aria-label="Toggle dark mode" aria-pressed="false">
+              <span class="theme-toggle-thumb"></span>
+            </button>
+          </div>
+
         </form>
 
         <!-- RESULTS: this section is hidden until the user searches -->
@@ -218,7 +242,7 @@
               <input
                 type="text"
                 id="custom-city"
-                placeholder="e.g. Joplin, MO"
+                placeholder="Joplin, Missouri"
               />
               <button type="button" id="add-stop-btn">Add Stop</button>
             </div>
@@ -252,6 +276,7 @@
     <!-- This line loads our app.js file — it goes at the BOTTOM so the page
          loads first before JavaScript runs -->
     <!-- app.js must load BEFORE the Maps API so initMap() is defined in time -->
+    <script src="theme.js"></script>
     <script src="app.js"></script>
     <script type="module" src="auth.js"></script>
     <script type="module" src="preferences.js"></script>

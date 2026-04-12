@@ -1,4 +1,100 @@
 /* =============================================
+   DESIGN TOKENS — The Connoisseur brand system
+   All colors, surfaces, and borders must use
+   these custom properties. No ad hoc hex codes.
+   ============================================= */
+
+:root {
+  /* Core palette */
+  --color-ink:        #1A1A2E;
+  --color-saffron:    #D4870A;
+  --color-parchment:  #F5ECD7;
+  --color-terracotta: #C8705A;
+  --color-verdigris:  #2E5D4B;
+
+  /* Functional / UI tones */
+  --color-ink-soft:   #2E2E42;
+  --color-ink-mid:    #35355A; /* lighter ink — used for header */
+  --color-sand:       #C5A882;
+  --color-linen:      #EDE4D3;
+  --color-offwhite:   #FAFAF6;
+  --color-muted:      #7A6F62;
+
+  /* Semantic surface aliases */
+  --bg-page:          var(--color-offwhite);
+  --bg-surface:       var(--color-parchment);
+  --bg-surface-alt:   var(--color-linen);
+  --bg-inverse:       var(--color-ink);
+
+  /* Semantic text aliases */
+  --text-primary:     var(--color-ink);
+  --text-secondary:   var(--color-muted);
+  --text-inverse:     var(--color-parchment);
+  --text-accent:      var(--color-saffron);
+
+  /* Border aliases */
+  --border-default:   var(--color-sand);
+  --border-subtle:    rgba(197, 168, 130, 0.35);
+
+  /* Action aliases */
+  --action-primary:       var(--color-saffron);
+  --action-primary-hover: #B8720A;
+  --action-secondary:     var(--color-terracotta);
+  --action-success:       var(--color-verdigris);
+}
+
+
+/* =============================================
+   DARK MODE — override surface and text tokens
+   Activated by [data-theme="dark"] on <html>
+   ============================================= */
+
+[data-theme="dark"] {
+  --bg-page:          #0F0F1A;
+  --bg-surface:       #1A1A2E;
+  --bg-surface-alt:   #25253D;
+  --bg-inverse:       var(--color-parchment);
+  --text-primary:     var(--color-parchment);
+  --text-secondary:   rgba(245, 236, 215, 0.55);
+  --text-inverse:     var(--color-ink);
+  --border-default:   rgba(245, 236, 215, 0.15);
+  --border-subtle:    rgba(245, 236, 215, 0.07);
+  --color-offwhite:   #1A1A2E;
+  --color-linen:      #25253D;
+  --color-muted:      rgba(245, 236, 215, 0.5);
+  --action-primary-hover: #E09520;
+}
+
+/* Nav in dark mode — transparent bg already works since page is dark,
+   text should be parchment by default */
+[data-theme="dark"] .nav-brand h1                { color: #1A1A2E; }
+[data-theme="dark"] .nav-tab                     { color: rgba(26, 26, 46, 0.5); }
+[data-theme="dark"] .nav-tab:hover               { color: #1A1A2E; }
+[data-theme="dark"] .nav-tab--active             { color: #1A1A2E; }
+[data-theme="dark"] .app-nav:hover               { background: #1A1A2E; }
+[data-theme="dark"] .app-nav:hover .nav-tab      { color: rgba(245, 236, 215, 0.55); }
+[data-theme="dark"] .app-nav:hover .nav-tab:hover,
+[data-theme="dark"] .app-nav:hover .nav-tab--active { color: var(--color-parchment); }
+[data-theme="dark"] .app-nav:hover .nav-brand h1 { color: var(--color-parchment); }
+[data-theme="dark"] .auth-header-signin {
+  background:   rgba(26, 26, 46, 0.08);
+  color:        #1A1A2E;
+  border-color: rgba(26, 26, 46, 0.2);
+}
+[data-theme="dark"] .auth-hamburger   { color: #1A1A2E; }
+[data-theme="dark"] .auth-header-create { color: rgba(26, 26, 46, 0.6); }
+
+/* Results header — keep parchment background + dark ink text in dark mode */
+[data-theme="dark"] .flight-results-header {
+  background: var(--color-parchment);
+  border-bottom-color: rgba(26, 26, 46, 0.15);
+}
+[data-theme="dark"] .flight-route-summary { color: #1A1A2E; }
+[data-theme="dark"] .flight-back-btn      { color: #1A1A2E; }
+[data-theme="dark"] .flight-back-btn:hover { color: #1A1A2E; opacity: 0.7; }
+
+
+/* =============================================
    GLOBAL STYLES
    These apply to the whole page
    ============================================= */
@@ -12,9 +108,9 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background-color: #f5f5f0;
-  color: #333;
+  font-family: "Bricolage Grotesque", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background-color: var(--bg-page);
+  color: var(--text-primary);
   height: 100vh;      /* lock to viewport — prevents the page from scrolling */
   overflow: hidden;   /* any scrolling happens inside the sidebar, not the page */
   display: flex;
@@ -23,52 +119,117 @@ body {
 
 
 /* =============================================
-   NAV TABS
-   The tab bar that sits between the header and the page content.
+   NAV BAR — permanent top bar (replaces the old header)
+   Three-column grid: logo | tabs | auth
    ============================================= */
 
 .app-nav {
-  display: flex;
-  background: #1e4420; /* slightly darker than the header green */
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  background: transparent;
   padding: 0 24px;
+  min-height: 56px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  transition: background 0.2s;
+  pointer-events: none; /* clicks pass through to content beneath */
+}
+
+.app-nav:hover {
+  background: #1A1A2E;
+  pointer-events: all;
+}
+
+/* Re-enable clicks on all interactive nav elements */
+.nav-brand,
+.nav-tabs,
+.nav-tab,
+.nav-auth,
+.auth-header-widget,
+.auth-header-signin,
+.auth-header-create,
+.auth-hamburger {
+  pointer-events: all;
+}
+
+/* ── Logo (left column) ── */
+.nav-brand {
+  display: flex;
+  align-items: center;
+}
+
+.nav-brand h1 {
+  font-size: 1.5rem;
+  color: var(--color-ink);
+  margin: 0;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.app-nav:hover .nav-brand h1 {
+  color: var(--color-parchment);
+}
+
+/* ── Tabs (centre column) ── */
+.nav-tabs {
+  display: flex;
+  align-items: center;
 }
 
 .nav-tab {
   display: inline-block;
-  padding: 12px 20px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.65);
+  padding: 0 18px;
+  height: 56px;
+  line-height: 56px;
+  font-size: 1rem;
+  font-weight: 800;
+  color: rgba(26, 26, 46, 0.5);
   text-decoration: none;
   border-bottom: 3px solid transparent;
   transition: color 0.15s, border-color 0.15s;
 }
 
 .nav-tab:hover {
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--color-ink);
 }
 
-/* The currently active tab gets a white underline and full opacity */
 .nav-tab--active {
-  color: white;
-  border-bottom-color: white;
+  color: var(--color-ink);
+  border-bottom-color: var(--color-saffron);
+}
+
+.app-nav:hover .nav-tab {
+  color: rgba(245, 236, 215, 0.55);
+}
+
+.app-nav:hover .nav-tab:hover {
+  color: var(--color-parchment);
+}
+
+.app-nav:hover .nav-tab--active {
+  color: var(--color-parchment);
+}
+
+/* ── Auth (right column) ── */
+.nav-auth {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  position: relative; /* anchor for the dropdown menu */
 }
 
 
-/* =============================================
-   HEADER
-   ============================================= */
-
-header {
-  background-color: #2c5f2e; /* dark green */
-  color: white;
-  padding: 20px 30px;
-  text-align: center;
-}
-
-header h1 {
-  font-size: 2rem;
-  margin-bottom: 6px;
+/* The "oo" slot in the Noorish wordmark — sized to match lowercase letters */
+.logo-oo {
+  height: 0.85em;
+  width: auto;
+  display: inline-block;
+  vertical-align: -0.15em;
+  margin: 0 0.05em;
 }
 
 header p {
@@ -96,16 +257,17 @@ main {
 .sidebar {
   width: 360px;
   min-width: 300px;
-  background: white;
+  background: var(--bg-surface);
   padding: 24px;
+  padding-top: 72px; /* clear the floating nav bar */
   overflow-y: auto;   /* scroll if content is taller than screen */
-  border-right: 1px solid #ddd;
+  border-right: 1px solid var(--border-default);
 }
 
 .sidebar h2 {
   font-size: 1.2rem;
   margin-bottom: 20px;
-  color: #2c5f2e;
+  color: var(--text-primary);
 }
 
 
@@ -121,7 +283,7 @@ label {
   display: block;
   font-size: 0.85rem;
   font-weight: 600;
-  color: #555;
+  color: var(--text-secondary);
   margin-bottom: 6px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -131,18 +293,18 @@ input[type="text"],
 input[type="number"] {
   width: 100%;
   padding: 10px 12px;
-  border: 1.5px solid #ddd;
+  border: 1.5px solid var(--border-default);
   border-radius: 8px;
   font-size: 1rem;
-  background: #fafafa;
+  background: var(--bg-page);
   transition: border-color 0.2s;
 }
 
 input[type="text"]:focus,
 input[type="number"]:focus {
   outline: none;
-  border-color: #2c5f2e;
-  background: white;
+  border-color: var(--action-primary);
+  background: var(--color-offwhite);
 }
 
 /* ── Dietary preference dropdown ── */
@@ -158,11 +320,11 @@ input[type="number"]:focus {
   justify-content: space-between;
   align-items: center;
   padding: 9px 12px;
-  background: white;
-  border: 1.5px solid #ddd;
+  background: var(--color-offwhite);
+  border: 1.5px solid var(--border-default);
   border-radius: 8px;
   font-size: 0.95rem;
-  color: #333;
+  color: var(--text-primary);
   cursor: pointer;
   text-align: left;
   transition: border-color 0.2s;
@@ -170,14 +332,14 @@ input[type="number"]:focus {
 
 .diet-toggle:hover,
 .diet-toggle:focus {
-  border-color: #2c5f2e;
+  border-color: var(--action-primary);
   outline: none;
 }
 
 /* Arrow icon rotates when open */
 .diet-toggle-arrow {
   font-size: 0.8rem;
-  color: #888;
+  color: var(--color-muted);
   transition: transform 0.2s;
   flex-shrink: 0;
 }
@@ -188,7 +350,7 @@ input[type="number"]:focus {
 
 /* Merge toggle bottom border with list top border when open */
 .diet-dropdown.open .diet-toggle {
-  border-color: #2c5f2e;
+  border-color: var(--action-primary);
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
 }
@@ -196,10 +358,10 @@ input[type="number"]:focus {
 /* Checkbox list — hidden until dropdown is opened */
 .diet-options-list {
   display: none;
-  border: 1.5px solid #2c5f2e;
+  border: 1.5px solid var(--action-primary);
   border-top: none;
   border-radius: 0 0 8px 8px;
-  background: white;
+  background: var(--color-offwhite);
   padding: 4px 0;
   max-height: 220px;
   overflow-y: auto;
@@ -216,19 +378,19 @@ input[type="number"]:focus {
   gap: 10px;
   padding: 8px 12px;
   font-size: 0.95rem;
-  color: #333;
+  color: var(--text-primary);
   cursor: pointer;
   transition: background 0.1s;
 }
 
 .diet-option:hover {
-  background: #f3f7f3;
+  background: var(--bg-surface-alt);
 }
 
 .diet-option input[type="checkbox"] {
   width: 16px;
   height: 16px;
-  accent-color: #2c5f2e;
+  accent-color: var(--action-primary);
   cursor: pointer;
   flex-shrink: 0;
 }
@@ -238,7 +400,7 @@ input[type="number"]:focus {
 /* The two-button selector that switches between interval and custom mode */
 .mode-toggle {
   display: flex;
-  border: 1.5px solid #ddd;
+  border: 1.5px solid var(--border-default);
   border-radius: 8px;
   overflow: hidden;
 }
@@ -246,11 +408,11 @@ input[type="number"]:focus {
 .mode-btn {
   flex: 1;
   padding: 10px 12px;
-  background: white;
+  background: var(--color-offwhite);
   border: none;
   font-size: 0.88rem;
   font-weight: 600;
-  color: #888;
+  color: var(--color-muted);
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
   text-align: center;
@@ -258,18 +420,18 @@ input[type="number"]:focus {
 
 /* Divider between the two buttons */
 .mode-btn:first-child {
-  border-right: 1.5px solid #ddd;
+  border-right: 1.5px solid var(--border-default);
 }
 
 /* The currently selected mode */
 .mode-btn--active {
-  background: #2c5f2e;
-  color: white;
+  background: var(--action-primary);
+  color: var(--color-ink);
 }
 
 .mode-btn:not(.mode-btn--active):hover {
-  background: #f3f7f3;
-  color: #333;
+  background: var(--bg-surface-alt);
+  color: var(--text-primary);
 }
 
 /* ── Custom waypoints input (shown in "Add My Own Stops" mode) ─────────────── */
@@ -282,19 +444,20 @@ input[type="number"]:focus {
 
 .waypoint-input-row button {
   padding: 9px 16px;
-  background: #2c5f2e;
-  color: white;
-  border: none;
+  background: transparent;
+  color: var(--color-ink);
+  border: 1px solid var(--color-ink);
   border-radius: 8px;
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.2s;
+  transition: background 0.2s, color 0.2s;
 }
 
 .waypoint-input-row button:hover {
-  background: #1e4420;
+  background: var(--color-ink);
+  color: var(--color-parchment);
 }
 
 /* The list of cities the user has added */
@@ -307,11 +470,11 @@ input[type="number"]:focus {
   justify-content: space-between;
   align-items: center;
   padding: 8px 10px;
-  background: #f3f7f3;
+  background: var(--bg-surface-alt);
   border-radius: 6px;
   margin-bottom: 6px;
   font-size: 0.9rem;
-  color: #333;
+  color: var(--text-primary);
 }
 
 /* ── Suggested layover airports ────────────────────────────────────────────── */
@@ -324,7 +487,7 @@ input[type="number"]:focus {
 .suggestions-label {
   font-size: 0.78rem;
   font-weight: 600;
-  color: #aaa;
+  color: var(--color-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 8px;
@@ -343,16 +506,16 @@ input[type="number"]:focus {
   align-items: center;
   gap: 6px;
   padding: 5px 10px;
-  background: white;
-  border: 1.5px solid #c4ddc4;
+  background: var(--color-offwhite);
+  border: 1.5px solid var(--border-default);
   border-radius: 20px;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
 }
 
 .suggestion-chip:hover:not(:disabled) {
-  background: #f3f7f3;
-  border-color: #2c5f2e;
+  background: var(--bg-surface-alt);
+  border-color: var(--action-primary);
 }
 
 .suggestion-chip:disabled {
@@ -360,25 +523,25 @@ input[type="number"]:focus {
   cursor: default;
 }
 
-/* Airport code — bold green */
+/* Airport code */
 .chip-code {
   font-size: 0.82rem;
   font-weight: 700;
-  color: #2c5f2e;
+  color: var(--action-success);
   letter-spacing: 0.04em;
 }
 
-/* City name — grey */
+/* City name */
 .chip-name {
   font-size: 0.78rem;
-  color: #777;
+  color: var(--text-secondary);
 }
 
 /* The × remove button on each waypoint */
 .waypoint-remove-btn {
   background: none;
   border: none;
-  color: #aaa;
+  color: var(--color-muted);
   font-size: 1.1rem;
   line-height: 1;
   padding: 0 2px;
@@ -393,8 +556,8 @@ button#search-btn {
   width: 100%;
   padding: 12px;
   margin-top: 8px;
-  background-color: #2c5f2e;
-  color: white;
+  background-color: var(--action-primary);
+  color: var(--color-ink);
   border: none;
   border-radius: 8px;
   font-size: 1rem;
@@ -404,12 +567,12 @@ button#search-btn {
 }
 
 button#search-btn:hover {
-  background-color: #1e4420;
+  background-color: var(--action-primary-hover);
 }
 
 /* Show a "loading" cursor while the app is working */
 button#search-btn:disabled {
-  background-color: #888;
+  background-color: var(--color-muted);
   cursor: wait;
 }
 
@@ -425,7 +588,7 @@ button#search-btn:disabled {
 #results h2 {
   font-size: 1.1rem;
   margin-bottom: 14px;
-  color: #2c5f2e;
+  color: var(--text-primary);
 }
 
 #stops-list {
@@ -434,8 +597,8 @@ button#search-btn:disabled {
 
 /* Each individual stop card */
 .stop-card {
-  background: #f9f9f6;
-  border: 1px solid #e0e0d8;
+  background: var(--bg-surface-alt);
+  border: 1px solid var(--border-default);
   border-radius: 10px;
   padding: 14px;
   margin-bottom: 12px;
@@ -444,7 +607,7 @@ button#search-btn:disabled {
 .stop-card .stop-number {
   font-size: 1rem;
   font-weight: 700;
-  color: #2c5f2e;
+  color: var(--action-success);
   margin-bottom: 8px;
   display: flex;
   align-items: center;
@@ -455,8 +618,8 @@ button#search-btn:disabled {
 .stop-badge {
   font-size: 0.7rem;
   font-weight: 600;
-  color: #888;
-  background: #eee;
+  color: var(--color-muted);
+  background: var(--bg-surface-alt);
   border-radius: 4px;
   padding: 1px 5px;
   letter-spacing: 0.02em;
@@ -470,17 +633,17 @@ button#search-btn:disabled {
 
 .stop-card .restaurant-address {
   font-size: 0.85rem;
-  color: #666;
+  color: var(--text-secondary);
   margin-bottom: 6px;
 }
 
 .stop-card .restaurant-meta {
   font-size: 0.82rem;
-  color: #888;
+  color: var(--color-muted);
 }
 
 .stop-card .rating {
-  color: #f4a261;
+  color: var(--color-saffron);
   font-weight: 600;
 }
 
@@ -491,13 +654,13 @@ button#search-btn:disabled {
 
 /* Thin divider line between options */
 .restaurant-option--divider {
-  border-bottom: 1px solid #ececec;
+  border-bottom: 1px solid var(--color-linen);
   padding-bottom: 10px;
   margin-bottom: 2px;
 }
 
 .restaurant-option:hover {
-  background: #f3f7f3;
+  background: var(--bg-surface-alt);
   border-radius: 6px;
   padding-left: 6px;
   margin-left: -6px;
@@ -505,24 +668,24 @@ button#search-btn:disabled {
 
 /* Highlighted state when an option is clicked */
 .restaurant-option.selected {
-  background: #fef3ec;
+  background: var(--bg-surface-alt);
   border-radius: 6px;
   padding-left: 6px;
   margin-left: -6px;
 }
 
 .restaurant-option.selected .option-label {
-  color: #f4a261;
+  color: var(--color-saffron);
 }
 
 /* Distance from route shown inline next to the rating */
 .distance-from-route {
-  color: #888;
+  color: var(--color-muted);
 }
 
 /* Today's hours shown inline next to the rating */
 .today-hours {
-  color: #555;
+  color: var(--text-secondary);
 }
 
 /* "See all hours" expandable section */
@@ -532,7 +695,7 @@ button#search-btn:disabled {
 }
 
 .all-hours summary {
-  color: #2c5f2e;
+  color: var(--text-accent);
   cursor: pointer;
   font-weight: 600;
   font-size: 0.8rem;
@@ -548,7 +711,7 @@ button#search-btn:disabled {
   margin-top: 7px;
   font-size: 0.82rem;
   font-weight: 600;
-  color: #2c5f2e;
+  color: var(--text-accent);
   text-decoration: none;
 }
 
@@ -567,16 +730,16 @@ button#search-btn:disabled {
 }
 
 .maps-links-label {
-  color: #888;
+  color: var(--color-muted);
 }
 
 .maps-link {
   display: inline-block;
   padding: 2px 9px;
-  border: 1px solid #c4ddc4;
+  border: 1px solid var(--border-default);
   border-radius: 12px;
-  background: #f3f7f3;
-  color: #2c5f2e;
+  background: var(--bg-surface-alt);
+  color: var(--action-success);
   font-size: 0.78rem;
   font-weight: 600;
   text-decoration: none;
@@ -584,9 +747,9 @@ button#search-btn:disabled {
 }
 
 .maps-link:hover {
-  background: #2c5f2e;
-  color: white;
-  border-color: #2c5f2e;
+  background: var(--action-success);
+  color: var(--color-parchment);
+  border-color: var(--action-success);
 }
 
 /* "Order online" pill buttons — same layout as maps-links but styled red */
@@ -606,17 +769,17 @@ button#search-btn:disabled {
   list-style: none;
   margin-top: 6px;
   padding: 8px 10px;
-  background: #f3f7f3;
+  background: var(--bg-surface-alt);
   border-radius: 6px;
   line-height: 1.7;
-  color: #555;
+  color: var(--text-secondary);
 }
 
 /* Small "Option A / B / C" label */
 .option-label {
   font-size: 0.72rem;
   font-weight: 700;
-  color: #2c5f2e;
+  color: var(--action-success);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   margin-bottom: 3px;
@@ -647,10 +810,10 @@ button#search-btn:disabled {
   align-items: center;
   justify-content: center;
   gap: 12px;
-  background: #f5f5f0;
+  background: var(--bg-page);
   text-align: center;
   padding: 40px;
-  color: #555;
+  color: var(--text-secondary);
 }
 
 .map-error-icon {
@@ -660,7 +823,7 @@ button#search-btn:disabled {
 
 #map-error h2 {
   font-size: 1.3rem;
-  color: #333;
+  color: var(--text-primary);
 }
 
 #map-error p {
@@ -672,7 +835,7 @@ button#search-btn:disabled {
 /* Small summary line above the stops list: "1,243 mile route · 8 stops" */
 .route-summary {
   font-size: 0.85rem;
-  color: #888;
+  color: var(--color-muted);
   margin-bottom: 14px;
 }
 
@@ -680,33 +843,34 @@ button#search-btn:disabled {
 .refresh-options-row {
   margin-top: 10px;
   padding-top: 10px;
-  border-top: 1px solid #ececec;
+  border-top: 1px solid var(--color-linen);
   text-align: center;
 }
 
 .refresh-options-btn {
   background: none;
   border: none;
-  color: #aaa;
+  color: var(--color-muted);
   font-size: 0.78rem;
   cursor: pointer;
   padding: 0;
 }
 
 .refresh-options-btn:hover {
-  color: #2c5f2e;
+  color: var(--text-accent);
   text-decoration: underline;
 }
 
 .refresh-options-btn:disabled {
-  color: #ccc;
+  color: var(--color-muted);
+  opacity: 0.5;
   cursor: default;
   text-decoration: none;
 }
 
 /* A stop card where no restaurant was found */
 .stop-card--empty .restaurant-name {
-  color: #aaa;
+  color: var(--color-muted);
 }
 
 /* Collapsible stop cards */
@@ -726,7 +890,7 @@ button#search-btn:disabled {
 .stop-toggle-arrow {
   margin-left: auto;
   font-size: 1rem;
-  color: #888;
+  color: var(--color-muted);
   transition: transform 0.2s ease;
 }
 
@@ -738,9 +902,9 @@ button#search-btn:disabled {
   display: inline-block;
   font-size: 0.75rem;
   font-weight: 600;
-  color: #5a5a5a;
-  background: #f4f4f4;
-  border: 1px solid #ddd;
+  color: var(--text-secondary);
+  background: var(--bg-surface-alt);
+  border: 1px solid var(--border-default);
   border-radius: 20px;
   padding: 2px 10px;
   margin-top: 4px;
@@ -763,7 +927,7 @@ button#search-btn:disabled {
 /* Show a loading spinner message */
 .loading-message {
   text-align: center;
-  color: #888;
+  color: var(--color-muted);
   padding: 20px 0;
   font-size: 0.95rem;
 }
@@ -787,19 +951,19 @@ button#search-btn:disabled {
 #custom-stop-section {
   margin-top: 24px;
   padding-top: 20px;
-  border-top: 1px solid #e0e0d8;
+  border-top: 1px solid var(--border-default);
 }
 
 #custom-stop-section h3 {
   font-size: 1rem;
   font-weight: 700;
-  color: #2c5f2e;
+  color: var(--text-primary);
   margin-bottom: 6px;
 }
 
 .custom-stop-hint {
   font-size: 0.82rem;
-  color: #888;
+  color: var(--color-muted);
   margin-bottom: 12px;
   line-height: 1.5;
 }
@@ -812,45 +976,48 @@ button#search-btn:disabled {
 .custom-stop-form input {
   flex: 1;
   padding: 9px 12px;
-  border: 1.5px solid #ddd;
+  border: 1.5px solid var(--border-default);
   border-radius: 8px;
   font-size: 0.95rem;
-  background: #fafafa;
+  background: var(--bg-page);
   transition: border-color 0.2s;
 }
 
 .custom-stop-form input:focus {
   outline: none;
-  border-color: #2c5f2e;
-  background: white;
+  border-color: var(--action-primary);
+  background: var(--color-offwhite);
 }
 
 .custom-stop-form button {
   padding: 9px 16px;
-  background: #2c5f2e;
-  color: white;
-  border: none;
+  background: transparent;
+  color: var(--color-ink);
+  border: 1px solid var(--color-ink);
   border-radius: 8px;
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.2s;
+  transition: background 0.2s, color 0.2s;
 }
 
 .custom-stop-form button:hover {
-  background: #1e4420;
+  background: var(--color-ink);
+  color: var(--color-parchment);
 }
 
 .custom-stop-form button:disabled {
-  background: #888;
+  background: var(--color-muted);
+  color: var(--color-parchment);
+  border-color: var(--color-muted);
   cursor: wait;
 }
 
-/* "Custom" badge — teal instead of grey to distinguish from numbered stops */
+/* "Custom" badge */
 .stop-badge--custom {
-  background: #e0f0f0;
-  color: #2a7a7a;
+  background: var(--bg-surface-alt);
+  color: var(--action-success);
 }
 
 
@@ -877,10 +1044,11 @@ button#search-btn:disabled {
 .flight-form-column {
   width: 360px;
   min-width: 300px;
-  background: white;
+  background: var(--bg-surface);
   padding: 24px;
+  padding-top: 72px; /* clear the floating nav bar */
   overflow-y: auto;
-  border-right: 1px solid #ddd;
+  border-right: 1px solid var(--border-default);
 }
 
 /* Right column — preview map fills remaining space */
@@ -918,7 +1086,7 @@ button#search-btn:disabled {
   display: flex;
   gap: 6px;
   margin-bottom: 24px;
-  border-bottom: 2px solid #ececec;
+  border-bottom: 2px solid var(--color-linen);
   padding-bottom: 0;
 }
 
@@ -928,7 +1096,7 @@ button#search-btn:disabled {
   padding: 8px 16px;
   font-size: 0.9rem;
   font-weight: 600;
-  color: #888;
+  color: var(--color-muted);
   cursor: pointer;
   border-bottom: 2px solid transparent;
   margin-bottom: -2px; /* sits flush with the container border-bottom */
@@ -937,23 +1105,23 @@ button#search-btn:disabled {
 }
 
 .mode-tab:hover {
-  color: #444;
+  color: var(--text-primary);
 }
 
 .mode-tab--active {
-  color: #2c5f2e;
-  border-bottom-color: #2c5f2e;
+  color: var(--action-primary);
+  border-bottom-color: var(--action-primary);
 }
 
 .flight-card h2 {
   font-size: 1.3rem;
-  color: #2c5f2e;
+  color: var(--text-primary);
   margin-bottom: 6px;
 }
 
 .flight-card-hint {
   font-size: 0.88rem;
-  color: #888;
+  color: var(--color-muted);
   margin-bottom: 24px;
   line-height: 1.5;
 }
@@ -971,13 +1139,12 @@ button#search-btn:disabled {
   top: 100%;
   left: 0;
   right: 0;
-  background: white;
-  border: 1.5px solid #2c5f2e;
+  background: var(--color-offwhite);
+  border: 1.5px solid var(--action-primary);
   border-top: none;
   border-radius: 0 0 8px 8px;
   list-style: none;
   z-index: 200;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
   overflow: hidden;
 }
 
@@ -988,7 +1155,7 @@ button#search-btn:disabled {
   gap: 2px;
   padding: 10px 12px;
   cursor: pointer;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--color-linen);
 }
 
 .airport-dropdown-item:last-child {
@@ -996,21 +1163,21 @@ button#search-btn:disabled {
 }
 
 .airport-dropdown-item:hover {
-  background: #f3f7f3;
+  background: var(--bg-surface-alt);
 }
 
 /* The bold 3-letter code shown on the first line */
 .dropdown-code {
   font-size: 0.95rem;
   font-weight: 700;
-  color: #2c5f2e;
+  color: var(--action-success);
   letter-spacing: 0.06em;
 }
 
 /* "City · Full Airport Name" shown on the second line */
 .dropdown-info {
   font-size: 0.78rem;
-  color: #888;
+  color: var(--color-muted);
 }
 
 /* Departure and arrival inputs sit side by side with an arrow between them */
@@ -1028,7 +1195,7 @@ button#search-btn:disabled {
 
 .airport-arrow {
   font-size: 1.4rem;
-  color: #aaa;
+  color: var(--color-muted);
   padding-bottom: 10px;
   flex-shrink: 0;
 }
@@ -1037,27 +1204,27 @@ button#search-btn:disabled {
 .airport-input {
   width: 100%;
   padding: 10px 12px;
-  border: 1.5px solid #ddd;
+  border: 1.5px solid var(--border-default);
   border-radius: 8px;
   font-size: 1.1rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  background: #fafafa;
+  background: var(--bg-page);
   transition: border-color 0.2s;
 }
 
 .airport-input:focus {
   outline: none;
-  border-color: #2c5f2e;
-  background: white;
+  border-color: var(--action-primary);
+  background: var(--color-offwhite);
 }
 
 /* Small grey "(optional, up to 3)" note next to the Layovers label */
 .label-optional {
   font-weight: 400;
   font-size: 0.8rem;
-  color: #aaa;
+  color: var(--color-muted);
   text-transform: none;
   letter-spacing: 0;
 }
@@ -1079,7 +1246,7 @@ button#search-btn:disabled {
 .layover-label {
   font-size: 0.82rem;
   font-weight: 600;
-  color: #888;
+  color: var(--color-muted);
   white-space: nowrap;
   min-width: 62px;
 }
@@ -1101,7 +1268,7 @@ button#search-btn:disabled {
 .layover-remove-btn {
   background: none;
   border: none;
-  color: #bbb;
+  color: var(--color-muted);
   font-size: 1.2rem;
   line-height: 1;
   padding: 0 4px;
@@ -1117,7 +1284,7 @@ button#search-btn:disabled {
 .add-layover-btn {
   background: none;
   border: none;
-  color: #2c5f2e;
+  color: var(--text-accent);
   font-size: 0.88rem;
   font-weight: 600;
   padding: 0;
@@ -1134,8 +1301,8 @@ button#search-btn:disabled {
   width: 100%;
   padding: 12px;
   margin-top: 20px;
-  background-color: #2c5f2e;
-  color: white;
+  background-color: var(--action-primary);
+  color: var(--color-ink);
   border: none;
   border-radius: 8px;
   font-size: 1rem;
@@ -1146,7 +1313,7 @@ button#search-btn:disabled {
 
 #dest-search-btn:hover,
 #flight-search-btn:hover {
-  background-color: #1e4420;
+  background-color: var(--action-primary-hover);
 }
 
 /* ── Step 2: Results ───────────────────────────────────────────────────────── */
@@ -1154,7 +1321,7 @@ button#search-btn:disabled {
 /* "Filtered for: [Keto] [Gluten Free]" row that appears at the top of each card */
 .flight-filter-row {
   font-size: 0.8rem;
-  color: #888;
+  color: var(--color-muted);
   margin-bottom: 12px;
   display: flex;
   flex-wrap: wrap;
@@ -1162,16 +1329,16 @@ button#search-btn:disabled {
   gap: 6px;
 }
 
-/* Each selected dietary preference shown as a small green pill */
+/* Each selected dietary preference shown as a small pill */
 .diet-tag {
   display: inline-block;
-  background: #e8f2e8;
-  color: #2c5f2e;
+  background: var(--bg-surface-alt);
+  color: var(--action-success);
   font-size: 0.75rem;
   font-weight: 600;
   padding: 2px 8px;
   border-radius: 20px;
-  border: 1px solid #c4ddc4;
+  border: 1px solid var(--border-subtle);
 }
 
 .diet-mention-badge {
@@ -1193,7 +1360,7 @@ button#search-btn:disabled {
 
 /* Thin line between restaurant rows */
 .flight-restaurant-item--divider {
-  border-bottom: 1px solid #ececec;
+  border-bottom: 1px solid var(--color-linen);
   padding-bottom: 12px;
   margin-bottom: 2px;
 }
@@ -1210,13 +1377,13 @@ button#search-btn:disabled {
 .flight-restaurant-name {
   font-size: 0.97rem;
   font-weight: 600;
-  color: #222;
+  color: var(--text-primary);
 }
 
 .flight-restaurant-rating {
   font-size: 0.85rem;
   font-weight: 600;
-  color: #f4a261;
+  color: var(--color-saffron);
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -1224,7 +1391,7 @@ button#search-btn:disabled {
 /* Cuisine type shown in small grey text below the name */
 .flight-cuisine-type {
   font-size: 0.82rem;
-  color: #888;
+  color: var(--color-muted);
   margin-bottom: 5px;
 }
 
@@ -1238,11 +1405,11 @@ button#search-btn:disabled {
 }
 
 .flight-terminal {
-  color: #555;
+  color: var(--text-secondary);
 }
 
 .flight-gate {
-  color: #555;
+  color: var(--text-secondary);
 }
 
 /* Collapsible hours section */
@@ -1255,7 +1422,7 @@ button#search-btn:disabled {
   border: none;
   padding: 0;
   font-size: 0.82rem;
-  color: #3a7bd5;
+  color: var(--text-accent);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -1274,10 +1441,10 @@ button#search-btn:disabled {
   list-style: none;
   margin: 6px 0 0 0;
   padding: 8px 10px;
-  background: #f8f8f8;
+  background: var(--bg-surface-alt);
   border-radius: 6px;
   font-size: 0.80rem;
-  color: #555;
+  color: var(--text-secondary);
   line-height: 1.7;
 }
 
@@ -1288,7 +1455,7 @@ button#search-btn:disabled {
 /* Loading state shown while the API call is in progress */
 .flight-airport-loading {
   font-size: 0.88rem;
-  color: #888;
+  color: var(--color-muted);
   padding: 16px;
   text-align: center;
 }
@@ -1315,7 +1482,7 @@ button#search-btn:disabled {
   align-items: center;
   gap: 20px;
   padding: 14px 24px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--border-default);
   flex-shrink: 0;
 }
 
@@ -1333,7 +1500,7 @@ button#search-btn:disabled {
   min-width: 300px;
   display: flex;
   flex-direction: column;
-  border-right: 1px solid #e5e7eb;
+  border-right: 1px solid var(--border-default);
   overflow: hidden;
 }
 
@@ -1363,7 +1530,7 @@ button#search-btn:disabled {
 .flight-back-btn {
   background: none;
   border: none;
-  color: #2c5f2e;
+  color: var(--text-accent);
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
@@ -1379,7 +1546,7 @@ button#search-btn:disabled {
 .flight-route-summary {
   font-size: 1rem;
   font-weight: 700;
-  color: #333;
+  color: var(--text-primary);
   letter-spacing: 0.04em;
 }
 
@@ -1396,10 +1563,10 @@ button#search-btn:disabled {
   padding: 8px 12px;
   font-size: 0.82rem;
   font-weight: 600;
-  border: 1.5px solid #d1d5db;
+  border: 1.5px solid var(--border-default);
   border-radius: 8px;
-  background: white;
-  color: #555;
+  background: var(--color-offwhite);
+  color: var(--text-secondary);
   cursor: pointer;
   transition: background 0.15s, color 0.15s, border-color 0.15s;
   white-space: nowrap;
@@ -1408,14 +1575,14 @@ button#search-btn:disabled {
 }
 
 .airport-filter-btn:hover {
-  border-color: #2c5f2e;
-  color: #2c5f2e;
+  border-color: var(--action-primary);
+  color: var(--action-primary);
 }
 
 .airport-filter-btn--active {
-  background: #2c5f2e;
-  border-color: #2c5f2e;
-  color: white;
+  background: var(--action-primary);
+  border-color: var(--action-primary);
+  color: var(--color-ink);
 }
 
 /* Small "Departure" / "Arrival" / "Layover" badge inside each airport card header */
@@ -1426,8 +1593,8 @@ button#search-btn:disabled {
   font-size: 0.7rem;
   font-weight: 600;
   border-radius: 20px;
-  background: #f0f4f0;
-  color: #2c5f2e;
+  background: var(--bg-surface-alt);
+  color: var(--action-success);
   vertical-align: middle;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -1435,8 +1602,8 @@ button#search-btn:disabled {
 
 /* One card per airport */
 .flight-airport-card {
-  background: white;
-  border: 1px solid #e0e0d8;
+  background: var(--bg-surface-alt);
+  border: 1px solid var(--border-default);
   border-radius: 12px;
   padding: 24px;
   margin-bottom: 16px;
@@ -1462,7 +1629,7 @@ button#search-btn:disabled {
 .flight-airport-toggle-arrow {
   margin-left: auto;
   font-size: 1rem;
-  color: #888;
+  color: var(--color-muted);
   transition: transform 0.2s ease;
 }
 
@@ -1474,9 +1641,9 @@ button#search-btn:disabled {
   display: inline-block;
   font-size: 0.75rem;
   font-weight: 600;
-  color: #5a5a5a;
-  background: #f4f4f4;
-  border: 1px solid #ddd;
+  color: var(--text-secondary);
+  background: var(--bg-surface-alt);
+  border: 1px solid var(--border-default);
   border-radius: 20px;
   padding: 2px 10px;
   margin-top: 4px;
@@ -1490,14 +1657,14 @@ button#search-btn:disabled {
 
 .add-airport-container {
   padding: 16px 0 8px;
-  border-top: 1px solid #e0e0d8;
+  border-top: 1px solid var(--border-default);
   margin-top: 8px;
 }
 
 .add-airport-toggle-btn {
   background: none;
   border: none;
-  color: #2c5f2e;
+  color: var(--text-accent);
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
@@ -1518,7 +1685,7 @@ button#search-btn:disabled {
 .add-airport-input {
   flex: 1;
   padding: 8px 12px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border-default);
   border-radius: 6px;
   font-size: 0.9rem;
   text-transform: uppercase;
@@ -1526,34 +1693,36 @@ button#search-btn:disabled {
 
 .add-airport-search-btn {
   padding: 8px 16px;
-  background: #2c5f2e;
-  color: white;
-  border: none;
+  background: transparent;
+  color: var(--color-ink);
+  border: 1px solid var(--color-ink);
   border-radius: 6px;
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
+  transition: background 0.2s, color 0.2s;
 }
 
 .add-airport-search-btn:hover {
-  background: #1e4420;
+  background: var(--color-ink);
+  color: var(--color-parchment);
 }
 
 .flight-airport-code {
   font-size: 1.3rem;
   font-weight: 700;
-  color: #2c5f2e;
+  color: var(--action-success);
   letter-spacing: 0.06em;
 }
 
 /* Placeholder text shown before data is wired up */
 .flight-airport-placeholder {
   font-size: 0.88rem;
-  color: #aaa;
+  color: var(--color-muted);
   padding: 16px;
-  background: #f9f9f6;
+  background: var(--bg-surface-alt);
   border-radius: 8px;
-  border: 1px dashed #ddd;
+  border: 1px dashed var(--border-default);
   text-align: center;
 }
 
@@ -1565,8 +1734,8 @@ button#search-btn:disabled {
 
 .flight-more-options-btn {
   background: none;
-  border: 1.5px solid #2c5f2e;
-  color: #2c5f2e;
+  border: 1.5px solid var(--color-ink);
+  color: var(--color-ink);
   font-size: 0.85rem;
   font-weight: 600;
   padding: 7px 18px;
@@ -1576,8 +1745,8 @@ button#search-btn:disabled {
 }
 
 .flight-more-options-btn:hover:not(:disabled) {
-  background: #2c5f2e;
-  color: white;
+  background: var(--color-ink);
+  color: var(--color-parchment);
 }
 
 .flight-more-options-btn:disabled {
@@ -1588,11 +1757,11 @@ button#search-btn:disabled {
 /* Shown when the user searches with no layovers added */
 .flight-no-layovers {
   font-size: 0.9rem;
-  color: #888;
+  color: var(--color-muted);
   text-align: center;
   padding: 40px 20px;
-  background: white;
-  border: 1px solid #e0e0d8;
+  background: var(--bg-surface-alt);
+  border: 1px solid var(--border-default);
   border-radius: 12px;
 }
 
@@ -1602,12 +1771,12 @@ button#search-btn:disabled {
    ============================================= */
 
 footer {
-  background: #eee;
+  background: var(--bg-surface-alt);
   text-align: center;
   padding: 12px;
   font-size: 0.8rem;
-  color: #999;
-  border-top: 1px solid #ddd;
+  color: var(--color-muted);
+  border-top: 1px solid var(--border-default);
 }
 
 
@@ -1623,7 +1792,7 @@ footer {
   .sidebar {
     width: 100%;
     border-right: none;
-    border-bottom: 1px solid #ddd;
+    border-bottom: 1px solid var(--border-default);
   }
 
   #map {
@@ -1637,7 +1806,7 @@ footer {
   .flight-form-column {
     width: 100%;
     border-right: none;
-    border-bottom: 1px solid #e0e0d8;
+    border-bottom: 1px solid var(--border-default);
   }
 
   .flight-preview-map-panel {
@@ -1657,20 +1826,12 @@ footer {
    AUTH — header button, modal, avatar
    ============================================= */
 
-/* Make the header relative so we can position the auth button inside it */
-header {
-  position: relative;
-}
-
-/* Widget container — positions both signed-out and signed-in states */
+/* Widget container — sits inside .nav-auth, flows naturally */
 .auth-header-widget {
-  position:        absolute;
-  top:             14px;
-  right:           20px;
   display:         flex;
-  flex-direction:  column;
-  align-items:     flex-end;
-  gap:             4px;
+  flex-direction:  row;
+  align-items:     center;
+  gap:             10px;
 }
 
 /* Sign In pill button (signed-out state) */
@@ -1678,85 +1839,155 @@ header {
   display:         flex;
   align-items:     center;
   gap:             7px;
-  background:      white;
-  color:           #2c5f2e;
-  border:          none;
+  background:      rgba(26, 26, 46, 0.1);
+  color:           var(--color-ink);
+  border:          1px solid rgba(26, 26, 46, 0.2);
   border-radius:   20px;
   padding:         6px 14px 6px 10px;
   font-size:       0.85rem;
   font-weight:     600;
   cursor:          pointer;
   line-height:     1;
+  transition:      background 0.15s, color 0.15s, border-color 0.15s;
 }
 
-.auth-header-signin:hover { background: #e8f2e8; }
+.auth-header-signin:hover {
+  background: rgba(26, 26, 46, 0.18);
+}
 
-/* "Create account" link beneath the Sign In button */
+.app-nav:hover .auth-header-signin {
+  background:   rgba(245, 236, 215, 0.15);
+  color:        var(--color-parchment);
+  border-color: rgba(245, 236, 215, 0.3);
+}
+
+.app-nav:hover .auth-header-signin:hover {
+  background: rgba(245, 236, 215, 0.25);
+}
+
+/* "Create account" link */
 .auth-header-create {
   background:  none;
   border:      none;
-  color:       rgba(255, 255, 255, 0.8);
+  color:       rgba(26, 26, 46, 0.65);
   font-size:   0.75rem;
   cursor:      pointer;
   padding:     0;
+  transition:  color 0.15s;
 }
 
-.auth-header-create:hover { color: white; text-decoration: underline; }
+.auth-header-create:hover { color: var(--color-ink); text-decoration: underline; }
 
-/* Hamburger button (signed-in state) */
+.app-nav:hover .auth-header-create       { color: rgba(245, 236, 215, 0.75); }
+.app-nav:hover .auth-header-create:hover { color: var(--color-parchment); text-decoration: underline; }
+
+/* Hamburger — just three lines, no button chrome */
 .auth-hamburger {
-  display:         flex;
-  align-items:     center;
-  justify-content: center;
-  background:      white;
-  color:           #2c5f2e;
-  border:          none;
-  border-radius:   8px;
-  padding:         7px 9px;
-  cursor:          pointer;
-  line-height:     1;
+  display:    flex;
+  flex-direction: column;
+  gap:        5px;
+  background: none;
+  border:     none;
+  color:      var(--color-ink);
+  padding:    4px 2px;
+  cursor:     pointer;
+  transition: color 0.15s;
 }
 
-.auth-hamburger:hover { background: #e8f2e8; }
+.auth-hamburger:hover { color: var(--color-ink); }
+
+.app-nav:hover .auth-hamburger       { color: var(--color-parchment); }
+.app-nav:hover .auth-hamburger:hover { color: var(--color-parchment); }
 
 /* Dropdown menu under hamburger */
 .auth-user-menu {
   position:      absolute;
   top:           44px;
   right:         0;
-  background:    white;
-  border:        1px solid #ddd;
+  background:    var(--color-offwhite);
+  border:        1px solid var(--border-default);
   border-radius: 10px;
   padding:       12px 16px;
   min-width:     190px;
-  box-shadow:    0 4px 16px rgba(0,0,0,0.12);
   z-index:       1000;
 }
 
 .auth-user-menu-name {
   font-size:  0.85rem;
-  color:      #555;
+  color:      var(--text-secondary);
   word-break: break-all;
 }
 
 .auth-menu-divider {
   border:     none;
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--color-linen);
   margin:     10px 0;
 }
 
 .auth-signout-btn {
   width:         100%;
-  background:    #f4f4f4;
-  border:        1px solid #ddd;
+  background:    var(--bg-surface-alt);
+  border:        1px solid var(--border-default);
   border-radius: 6px;
   padding:       7px 0;
   font-size:     0.85rem;
   cursor:        pointer;
-  color:         #333;
+  color:         var(--text-primary);
 }
 
-.auth-signout-btn:hover { background: #e8e8e8; }
+.auth-signout-btn:hover { background: var(--color-linen); }
+
+
+/* =============================================
+   THEME TOGGLE — pill switch used in search
+   panels and user menu
+   ============================================= */
+
+.theme-toggle-row {
+  display:         flex;
+  align-items:     center;
+  justify-content: space-between;
+  padding:         8px 0;
+}
+
+.theme-toggle-label {
+  font-size:  0.82rem;
+  font-weight: 500;
+  color:      var(--text-secondary);
+}
+
+.theme-toggle-btn {
+  position:      relative;
+  width:         38px;
+  height:        21px;
+  background:    var(--border-default);
+  border:        none;
+  border-radius: 11px;
+  cursor:        pointer;
+  padding:       0;
+  flex-shrink:   0;
+  transition:    background 0.2s;
+}
+
+.theme-toggle-btn--on {
+  background: var(--color-saffron);
+}
+
+.theme-toggle-thumb {
+  position:      absolute;
+  top:           2.5px;
+  left:          2.5px;
+  width:         16px;
+  height:        16px;
+  background:    white;
+  border-radius: 50%;
+  transition:    transform 0.2s;
+  pointer-events: none;
+}
+
+.theme-toggle-btn--on .theme-toggle-thumb {
+  transform: translateX(17px);
+}
 
 /* Full-screen dimmed overlay behind the modal */
 .auth-overlay {
@@ -1772,13 +2003,13 @@ header {
   top:           50%;
   left:          50%;
   transform:     translate(-50%, -50%);
-  background:    white;
+  background:    var(--color-offwhite);
+  border:        1px solid var(--border-default);
   border-radius: 14px;
   padding:       36px 32px 28px;
   width:         360px;
   max-width:     90vw;
   z-index:       1200;
-  box-shadow:    0 8px 32px rgba(0,0,0,0.18);
 }
 
 .auth-close-btn {
@@ -1788,24 +2019,24 @@ header {
   background: none;
   border:     none;
   font-size:  1.1rem;
-  color:      #999;
+  color:      var(--color-muted);
   cursor:     pointer;
   line-height: 1;
 }
 
-.auth-close-btn:hover { color: #333; }
+.auth-close-btn:hover { color: var(--text-primary); }
 
 .auth-title {
   font-size:     1.3rem;
   font-weight:   700;
-  color:         #1a1a1a;
+  color:         var(--text-primary);
   margin-bottom: 20px;
   text-align:    center;
 }
 
 .auth-subtitle {
   font-size:     0.9rem;
-  color:         #666;
+  color:         var(--text-secondary);
   margin-bottom: 16px;
   text-align:    center;
 }
@@ -1818,8 +2049,8 @@ header {
   gap:             10px;
   width:           100%;
   padding:         10px;
-  background:      white;
-  border:          1px solid #ddd;
+  background:      var(--color-offwhite);
+  border:          1px solid var(--border-default);
   border-radius:   8px;
   font-size:       0.9rem;
   font-weight:     500;
@@ -1827,7 +2058,7 @@ header {
   margin-bottom:   16px;
 }
 
-.auth-google-btn:hover { background: #f8f8f8; }
+.auth-google-btn:hover { background: var(--bg-surface-alt); }
 
 .auth-google-btn img {
   width:  18px;
@@ -1840,7 +2071,7 @@ header {
   align-items:    center;
   gap:            10px;
   margin-bottom:  16px;
-  color:          #bbb;
+  color:          var(--color-muted);
   font-size:      0.8rem;
 }
 
@@ -1849,7 +2080,7 @@ header {
   content:    "";
   flex:       1;
   height:     1px;
-  background: #e8e8e8;
+  background: var(--color-linen);
 }
 
 /* Text inputs */
@@ -1857,15 +2088,16 @@ header {
   display:       block;
   width:         100%;
   padding:       10px 12px;
-  border:        1px solid #ddd;
+  border:        1px solid var(--border-default);
   border-radius: 8px;
   font-size:     0.9rem;
   margin-bottom: 10px;
   box-sizing:    border-box;
   outline:       none;
+  background:    var(--color-offwhite);
 }
 
-.auth-input:focus { border-color: #2c5f2e; }
+.auth-input:focus { border-color: var(--action-primary); }
 
 /* Error and success messages */
 .auth-error {
@@ -1876,7 +2108,7 @@ header {
 
 .auth-success {
   font-size:     0.82rem;
-  color:         #2c5f2e;
+  color:         var(--action-success);
   margin-bottom: 10px;
 }
 
@@ -1884,8 +2116,8 @@ header {
 .auth-submit-btn {
   width:         100%;
   padding:       11px;
-  background:    #2c5f2e;
-  color:         white;
+  background:    var(--action-primary);
+  color:         var(--color-ink);
   border:        none;
   border-radius: 8px;
   font-size:     0.95rem;
@@ -1894,7 +2126,7 @@ header {
   margin-top:    4px;
 }
 
-.auth-submit-btn:hover { background: #234d24; }
+.auth-submit-btn:hover { background: var(--action-primary-hover); }
 
 /* Footer links (sign up / forgot password) */
 .auth-footer {
@@ -1904,13 +2136,13 @@ header {
   gap:             8px;
   margin-top:      16px;
   font-size:       0.82rem;
-  color:           #999;
+  color:           var(--color-muted);
 }
 
 .auth-link-btn {
   background:  none;
   border:      none;
-  color:       #2c5f2e;
+  color:       var(--text-accent);
   font-size:   0.82rem;
   cursor:      pointer;
   padding:     0;
@@ -1932,7 +2164,7 @@ header {
   border:        none;
   text-align:    left;
   font-size:     0.85rem;
-  color:         #2c5f2e;
+  color:         var(--text-accent);
   font-weight:   600;
   cursor:        pointer;
   padding:       2px 0;
@@ -1942,9 +2174,9 @@ header {
 
 /* Info banner shown in the sign-in modal (e.g. "Sign in to save restaurants") */
 .auth-info {
-  background:    #e8f2e8;
-  color:         #1e4420;
-  border:        1px solid #c3dac4;
+  background:    var(--bg-surface-alt);
+  color:         var(--action-success);
+  border:        1px solid var(--border-subtle);
   border-radius: 6px;
   padding:       8px 12px;
   font-size:     0.82rem;
@@ -1963,7 +2195,7 @@ header {
   background:    none;
   border:        none;
   cursor:        pointer;
-  color:         #aaa;
+  color:         var(--color-muted);
   padding:       4px;
   border-radius: 4px;
   line-height:   1;
@@ -1976,16 +2208,16 @@ header {
 }
 
 .pin-btn:hover {
-  color: #2c5f2e;
+  color: var(--action-success);
 }
 
 /* Filled (pinned) state */
 .pin-btn--pinned {
-  color: #2c5f2e;
+  color: var(--action-success);
 }
 
 .pin-btn--pinned svg {
-  fill: #2c5f2e;
+  fill: var(--action-success);
 }
 
 /* Make sure the card has position:relative so the pin button can anchor to it */
@@ -2015,11 +2247,11 @@ header {
   width:         360px;
   max-width:     100vw;
   height:        100vh;
-  background:    white;
+  background:    var(--color-offwhite);
+  border-left:   1px solid var(--border-default);
   z-index:       950;
   display:       flex;
   flex-direction: column;
-  box-shadow:    -4px 0 24px rgba(0,0,0,0.14);
 }
 
 /* Header row: "My Trips" title + close button */
@@ -2028,14 +2260,14 @@ header {
   align-items:     center;
   justify-content: space-between;
   padding:         18px 20px 14px;
-  border-bottom:   1px solid #eee;
+  border-bottom:   1px solid var(--color-linen);
   flex-shrink:     0;
 }
 
 .trips-panel-title {
   font-size:   1.1rem;
   font-weight: 700;
-  color:       #1e4420;
+  color:       var(--text-primary);
 }
 
 .trips-panel-close {
@@ -2043,13 +2275,13 @@ header {
   border:        none;
   font-size:     1.1rem;
   cursor:        pointer;
-  color:         #888;
+  color:         var(--color-muted);
   padding:       4px 6px;
   border-radius: 4px;
   line-height:   1;
 }
 
-.trips-panel-close:hover { color: #333; background: #f4f4f4; }
+.trips-panel-close:hover { color: var(--text-primary); background: var(--bg-surface-alt); }
 
 /* Scrollable body */
 .trips-panel-body {
@@ -2061,7 +2293,7 @@ header {
 /* Empty state message */
 .trips-empty {
   font-size:   0.9rem;
-  color:       #888;
+  color:       var(--color-muted);
   text-align:  center;
   margin-top:  40px;
   line-height: 1.6;
@@ -2083,7 +2315,7 @@ header {
 .trips-title {
   font-size:   0.85rem;
   font-weight: 700;
-  color:       #555;
+  color:       var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   flex:        1;
@@ -2093,32 +2325,32 @@ header {
   cursor: pointer;
 }
 
-.trips-title--link:hover { color: #2c5f2e; }
+.trips-title--link:hover { color: var(--text-accent); }
 
 .trips-edit-btn {
   background:    none;
   border:        none;
   cursor:        pointer;
-  color:         #aaa;
+  color:         var(--color-muted);
   padding:       2px;
   border-radius: 3px;
   line-height:   1;
   flex-shrink:   0;
 }
 
-.trips-edit-btn:hover { color: #2c5f2e; }
+.trips-edit-btn:hover { color: var(--text-accent); }
 
 .trips-toggle-btn {
   background:  none;
   border:      none;
   cursor:      pointer;
-  color:       #aaa;
+  color:       var(--color-muted);
   padding:     2px;
   line-height: 1;
   flex-shrink: 0;
 }
 
-.trips-toggle-btn:hover { color: #2c5f2e; }
+.trips-toggle-btn:hover { color: var(--text-accent); }
 
 .trips-chevron {
   display:    block;
@@ -2137,17 +2369,18 @@ header {
   flex:          1;
   font-size:     0.85rem;
   font-weight:   700;
-  color:         #333;
-  border:        1px solid #2c5f2e;
+  color:         var(--text-primary);
+  border:        1px solid var(--action-primary);
   border-radius: 4px;
   padding:       2px 6px;
   outline:       none;
+  background:    var(--color-offwhite);
 }
 
 /* Individual saved restaurant card */
 .trips-restaurant-card {
-  background:    #f9f9f6;
-  border:        1px solid #e8e8e0;
+  background:    var(--bg-surface-alt);
+  border:        1px solid var(--border-default);
   border-radius: 8px;
   padding:       12px 36px 12px 14px;
   margin-bottom: 8px;
@@ -2157,25 +2390,25 @@ header {
 .trips-restaurant-name {
   font-size:   0.9rem;
   font-weight: 600;
-  color:       #222;
+  color:       var(--text-primary);
   margin-bottom: 3px;
 }
 
 .trips-restaurant-address {
   font-size: 0.78rem;
-  color:     #888;
+  color:     var(--color-muted);
   margin-bottom: 3px;
 }
 
 .trips-restaurant-meta {
   font-size: 0.78rem;
-  color:     #e6a817;
+  color:     var(--color-saffron);
   margin-bottom: 4px;
 }
 
 .trips-restaurant-link {
   font-size:       0.78rem;
-  color:           #2c5f2e;
+  color:           var(--text-accent);
   text-decoration: none;
 }
 
@@ -2189,7 +2422,7 @@ header {
   background:    none;
   border:        none;
   cursor:        pointer;
-  color:         #bbb;
+  color:         var(--color-muted);
   font-size:     0.85rem;
   padding:       2px 4px;
   border-radius: 3px;
@@ -2211,7 +2444,7 @@ header {
   border:      none;
   cursor:      pointer;
   font-size:   1.15rem;
-  color:       #ddd;
+  color:       var(--color-linen);
   padding:     0;
   line-height: 1;
   transition:  color 0.1s;
@@ -2219,12 +2452,12 @@ header {
 
 .trips-star--filled,
 .trips-star--hover {
-  color: #e6a817;
+  color: var(--color-saffron);
 }
 
 .trips-rating-label {
   font-size:    0.7rem;
-  color:        #aaa;
+  color:        var(--color-muted);
   margin-left:  6px;
   white-space:  nowrap;
 }
@@ -2232,7 +2465,7 @@ header {
 /* ── User review ──────────────────────────────────────────────── */
 .trips-review-display {
   font-size:   0.78rem;
-  color:       #555;
+  color:       var(--text-secondary);
   font-style:  italic;
   margin:      4px 0 2px;
   line-height: 1.45;
@@ -2243,7 +2476,7 @@ header {
   border:               none;
   cursor:               pointer;
   font-size:            0.75rem;
-  color:                #2c5f2e;
+  color:                var(--text-accent);
   padding:              2px 0;
   text-decoration:      underline;
   text-underline-offset: 2px;
@@ -2251,7 +2484,7 @@ header {
   margin-top:           4px;
 }
 
-.trips-review-toggle:hover { color: #1a3d1b; }
+.trips-review-toggle:hover { color: var(--action-primary-hover); }
 
 .trips-review-section { margin-top: 6px; }
 .trips-review-section.hidden { display: none; }
@@ -2261,22 +2494,23 @@ header {
   box-sizing:  border-box;
   font-size:   0.8rem;
   font-family: inherit;
-  color:       #333;
-  border:      1px solid #ddd;
+  color:       var(--text-primary);
+  border:      1px solid var(--border-default);
   border-radius: 4px;
   padding:     6px 8px;
   resize:      vertical;
+  background:  var(--color-offwhite);
 }
 
 .trips-review-textarea:focus {
   outline:      none;
-  border-color: #2c5f2e;
+  border-color: var(--action-primary);
 }
 
 .trips-review-save-btn {
   margin-top:    5px;
-  background:    #2c5f2e;
-  color:         white;
+  background:    var(--action-primary);
+  color:         var(--color-ink);
   border:        none;
   border-radius: 4px;
   padding:       4px 14px;
@@ -2284,7 +2518,7 @@ header {
   cursor:        pointer;
 }
 
-.trips-review-save-btn:hover { background: #1a3d1b; }
+.trips-review-save-btn:hover { background: var(--action-primary-hover); }
 
 /* ── Dietary certification badges ─────────────────────────────── */
 .trips-cert-row {
@@ -2295,10 +2529,10 @@ header {
 }
 
 .trips-cert-btn {
-  background:    white;
-  border:        1px solid #bbb;
+  background:    var(--color-offwhite);
+  border:        1px solid var(--border-default);
   border-radius: 20px;
-  color:         #666;
+  color:         var(--text-secondary);
   cursor:        pointer;
   font-size:     0.72rem;
   padding:       3px 10px;
@@ -2306,13 +2540,13 @@ header {
 }
 
 .trips-cert-btn:hover {
-  border-color: #2c5f2e;
-  color:        #2c5f2e;
+  border-color: var(--action-primary);
+  color:        var(--action-primary);
 }
 
 .trips-cert-btn--confirmed {
-  background:   #eaf4ea;
-  border-color: #2c5f2e;
-  color:        #2c5f2e;
+  background:   var(--bg-surface-alt);
+  border-color: var(--action-success);
+  color:        var(--action-success);
   font-weight:  600;
 }

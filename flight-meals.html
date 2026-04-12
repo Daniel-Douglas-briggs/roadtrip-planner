@@ -5,40 +5,67 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Flight Meals — Route Bites</title>
 
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600;12..96,700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="style.css" />
   </head>
 
   <body class="flight-page">
 
-    <!-- HEADER -->
-    <header>
-      <h1>Noorish</h1>
-      <p>Got a trip coming up soon? Your one stop recommendation engine for your dietary needs</p>
-
-      <!-- Signed-out state -->
-      <div id="auth-signed-out" class="auth-header-widget">
-        <button id="auth-btn" class="auth-header-signin">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-          Sign In
-        </button>
-        <button id="auth-create-btn" class="auth-header-create">Create account</button>
+    <nav class="app-nav">
+      <!-- Logo — far left -->
+      <div class="nav-brand">
+        <h1>N<svg class="logo-oo" viewBox="0 0 72 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect x="30" y="1" width="12" height="16" rx="6" stroke="currentColor" stroke-width="2"/>
+          <line x1="30" y1="11" x2="2" y2="11" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="42" y1="11" x2="70" y2="11" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="13" y1="11" x2="13" y2="16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <line x1="59" y1="11" x2="59" y2="16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="13" cy="25" r="9" stroke="currentColor" stroke-width="2"/>
+          <circle cx="13" cy="25" r="3.5" fill="currentColor"/>
+          <circle cx="59" cy="25" r="9" stroke="currentColor" stroke-width="2"/>
+          <circle cx="59" cy="25" r="3.5" fill="currentColor"/>
+        </svg>rish</h1>
       </div>
 
-      <!-- Signed-in state -->
-      <div id="auth-signed-in" class="auth-header-widget hidden">
-        <button id="auth-menu-btn" class="auth-hamburger">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-        </button>
+      <!-- Tabs — centred -->
+      <div class="nav-tabs">
+        <a href="index.html" class="nav-tab">Road Trip Meals</a>
+        <a href="flight-meals.html" class="nav-tab nav-tab--active">Flight Meals</a>
+        <a href="destination-meals.html" class="nav-tab">Destination Meals</a>
+      </div>
 
-        <div id="auth-user-menu" class="auth-user-menu hidden">
-          <div id="auth-user-name" class="auth-user-menu-name"></div>
-          <hr class="auth-menu-divider" />
-          <button class="auth-menu-item-btn my-trips-open-btn">My Trips</button>
-          <hr class="auth-menu-divider" />
-          <button id="auth-signout-btn" class="auth-signout-btn">Sign Out</button>
+      <!-- Auth — far right -->
+      <div class="nav-auth">
+        <div id="auth-signed-out" class="auth-header-widget">
+          <button id="auth-btn" class="auth-header-signin">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+            Sign In
+          </button>
+          <button id="auth-create-btn" class="auth-header-create">Create account</button>
+        </div>
+        <div id="auth-signed-in" class="auth-header-widget hidden">
+          <button id="auth-menu-btn" class="auth-hamburger">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+          <div id="auth-user-menu" class="auth-user-menu hidden">
+            <div id="auth-user-name" class="auth-user-menu-name"></div>
+            <hr class="auth-menu-divider" />
+            <button class="auth-menu-item-btn my-trips-open-btn">My Trips</button>
+            <hr class="auth-menu-divider" />
+            <div class="theme-toggle-row">
+              <span class="theme-toggle-label">Dark mode</span>
+              <button class="theme-toggle-btn" aria-label="Toggle dark mode" aria-pressed="false">
+                <span class="theme-toggle-thumb"></span>
+              </button>
+            </div>
+            <hr class="auth-menu-divider" />
+            <button id="auth-signout-btn" class="auth-signout-btn">Sign Out</button>
+          </div>
         </div>
       </div>
-    </header>
+    </nav>
 
     <div id="auth-overlay" class="auth-overlay hidden"></div>
     <div id="auth-modal" class="auth-modal hidden">
@@ -90,13 +117,6 @@
       </div>
     </div>
 
-    <!-- NAV: tab bar — Flight Meals is the active tab on this page -->
-    <nav class="app-nav">
-      <a href="index.html" class="nav-tab">🗺️ Road Trip Meals</a>
-      <a href="flight-meals.html" class="nav-tab nav-tab--active">✈️ Flight Meals</a>
-      <a href="destination-meals.html" class="nav-tab">📍 Destination Meals</a>
-    </nav>
-
     <main class="flight-main" id="flight-main">
 
       <!-- ── STEP 1: Flight route input form ──────────────────────────────── -->
@@ -123,7 +143,7 @@
                 <input
                   type="text"
                   id="airport-quick-input"
-                  placeholder="City or code (e.g. Chicago or ORD)"
+                  placeholder="Chicago or ORD"
                   autocomplete="off"
                 />
                 <ul class="airport-dropdown hidden" id="airport-quick-dropdown"></ul>
@@ -139,7 +159,7 @@
                   <input
                     type="text"
                     id="departure"
-                    placeholder="City or code (e.g. Chicago)"
+                    placeholder="Chicago, Illinois"
                     autocomplete="off"
                   />
                   <ul class="airport-dropdown hidden" id="departure-dropdown"></ul>
@@ -150,7 +170,7 @@
                   <input
                     type="text"
                     id="arrival"
-                    placeholder="City or code (e.g. New York)"
+                    placeholder="New York, New York"
                     autocomplete="off"
                   />
                   <ul class="airport-dropdown hidden" id="arrival-dropdown"></ul>
@@ -199,6 +219,13 @@
 
             <button type="button" id="flight-search-btn">Find Meal Options</button>
 
+            <div class="theme-toggle-row">
+              <span class="theme-toggle-label">Dark mode</span>
+              <button class="theme-toggle-btn" aria-label="Toggle dark mode" aria-pressed="false">
+                <span class="theme-toggle-thumb"></span>
+              </button>
+            </div>
+
           </form>
 
         </div>
@@ -243,6 +270,7 @@
 
     <!-- flight-meals.js must load BEFORE the Maps API so initFlightMeals()
          is defined in time for Google to call it -->
+    <script src="theme.js"></script>
     <script src="flight-meals.js"></script>
 
     <!-- Google Maps API — same key as the road trip page.
