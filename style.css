@@ -84,14 +84,6 @@
 [data-theme="dark"] .auth-hamburger   { color: #1A1A2E; }
 [data-theme="dark"] .auth-header-create { color: rgba(26, 26, 46, 0.6); }
 
-/* Results header — keep parchment background + dark ink text in dark mode */
-[data-theme="dark"] .flight-results-header {
-  background: var(--color-parchment);
-  border-bottom-color: rgba(26, 26, 46, 0.15);
-}
-[data-theme="dark"] .flight-route-summary { color: #1A1A2E; }
-[data-theme="dark"] .flight-back-btn      { color: #1A1A2E; }
-[data-theme="dark"] .flight-back-btn:hover { color: #1A1A2E; opacity: 0.7; }
 
 
 /* =============================================
@@ -1476,13 +1468,17 @@ button#search-btn:disabled {
   display: none;
 }
 
-/* Header bar: back button + route summary — sits above both columns */
+/* Route/city summary — lives at the top of the left panel */
 .flight-results-header {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  padding: 14px 24px;
+  padding: 16px 24px 14px;
   border-bottom: 1px solid var(--border-default);
+  flex-shrink: 0;
+}
+
+/* Back to search — pinned to the bottom of the left panel */
+.flight-results-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border-default);
   flex-shrink: 0;
 }
 

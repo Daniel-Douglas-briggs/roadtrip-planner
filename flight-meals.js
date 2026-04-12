@@ -641,6 +641,7 @@ flightSearchBtn.addEventListener("click", function () {
     flightResultsList.innerHTML = "";
     flightMain.classList.add("hidden");
     flightResultSection.classList.remove("hidden");
+    setupFlightLogoFade();
 
     flightBounds = new google.maps.LatLngBounds();
     flightMarkers.forEach(function (m) { m.setMap(null); });
@@ -708,6 +709,7 @@ flightSearchBtn.addEventListener("click", function () {
   // Switch to step 2: hide the form panel, show the two-column results layout
   flightMain.classList.add("hidden");
   flightResultSection.classList.remove("hidden");
+  setupFlightLogoFade();
 
   // Reset the shared map for this search
   flightBounds = new google.maps.LatLngBounds();
@@ -1348,9 +1350,32 @@ function renderAddAirportUI() {
 }
 
 
+// ── Logo fade on results scroll ───────────────────────────────────────────────
+
+const flightResultsScroller = document.getElementById("flight-results-list");
+const navBrandFlight        = document.querySelector(".nav-brand");
+
+function onFlightResultsScroll() {
+  // Start fading after 60 px, fully gone by 160 px
+  var t = Math.max(0, Math.min(1, (flightResultsScroller.scrollTop - 60) / 100));
+  navBrandFlight.style.opacity = 1 - t;
+}
+
+function setupFlightLogoFade() {
+  flightResultsScroller.scrollTop = 0;
+  navBrandFlight.style.opacity = 1;
+  flightResultsScroller.addEventListener("scroll", onFlightResultsScroll);
+}
+
+function resetFlightLogoFade() {
+  flightResultsScroller.removeEventListener("scroll", onFlightResultsScroll);
+  navBrandFlight.style.opacity = 1;
+}
+
 // ── Step 2 → Step 1: back button ─────────────────────────────────────────────
 
 flightBackBtn.addEventListener("click", function () {
+  resetFlightLogoFade();
   flightResultSection.classList.add("hidden");
   flightMain.classList.remove("hidden");
 });

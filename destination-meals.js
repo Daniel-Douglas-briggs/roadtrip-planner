@@ -237,6 +237,7 @@ destSearchBtn.addEventListener("click", function () {
     // Switch to Step 2: hide the form, show the results layout
     destMain.classList.add("hidden");
     destResultSection.classList.remove("hidden");
+    setupDestLogoFade();
 
     // Reset the map state for this search
     destBounds = new google.maps.LatLngBounds();
@@ -601,9 +602,32 @@ function renderDestResults(restaurants, selectedDiets, pool, cityLocation) {
 }
 
 
+// ── Logo fade on results scroll ───────────────────────────────────────────────
+
+const destResultsScroller = document.getElementById("flight-results-list");
+const navBrandDest        = document.querySelector(".nav-brand");
+
+function onDestResultsScroll() {
+  // Start fading after 60 px, fully gone by 160 px
+  var t = Math.max(0, Math.min(1, (destResultsScroller.scrollTop - 60) / 100));
+  navBrandDest.style.opacity = 1 - t;
+}
+
+function setupDestLogoFade() {
+  destResultsScroller.scrollTop = 0;
+  navBrandDest.style.opacity = 1;
+  destResultsScroller.addEventListener("scroll", onDestResultsScroll);
+}
+
+function resetDestLogoFade() {
+  destResultsScroller.removeEventListener("scroll", onDestResultsScroll);
+  navBrandDest.style.opacity = 1;
+}
+
 // ── Step 2 → Step 1: back button ─────────────────────────────────────────────
 
 destBackBtn.addEventListener("click", function () {
+  resetDestLogoFade();
   destResultSection.classList.add("hidden");
   destMain.classList.remove("hidden");
 });

@@ -181,16 +181,15 @@
     <!-- Hidden until the user submits the form -->
     <section id="flight-results-section" class="hidden">
 
-      <div class="flight-results-header">
-        <button type="button" id="dest-back-btn" class="flight-back-btn">← Back to search</button>
-        <!-- JavaScript fills this in with the city name after geocoding -->
-        <p id="dest-city-summary" class="flight-route-summary"></p>
-      </div>
-
       <div class="flight-results-body">
-        <!-- Left: scrollable restaurant cards -->
+        <!-- Left: back button + summary + scrollable restaurant cards -->
         <div id="flight-left-panel">
+          <!-- city summary used by JS but not displayed in the panel header -->
+          <p id="dest-city-summary" class="hidden"></p>
           <div id="flight-results-list"></div>
+          <div class="flight-results-footer">
+            <button type="button" id="dest-back-btn" class="flight-back-btn">← Back to search</button>
+          </div>
         </div>
 
         <!-- Right: map with a pin for every restaurant -->
