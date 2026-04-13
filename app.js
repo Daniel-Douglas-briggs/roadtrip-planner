@@ -296,7 +296,7 @@ dietMenu.addEventListener("change", function () {
 // The button is type="button" (not type="submit") so the browser never
 // tries to submit the form or reload the page — no preventDefault needed.
 
-searchBtn.addEventListener("click", function () {
+searchBtn.addEventListener("click", async function () {
   const start = document.getElementById("start").value.trim();
   const end   = document.getElementById("end").value.trim();
 
@@ -313,6 +313,9 @@ searchBtn.addEventListener("click", function () {
     return;
   }
 
+  // ── Phase 4: check search limit before doing anything ─────────────────────
+  if (window.checkSearchLimit && !await window.checkSearchLimit()) return;
+
   // Set trip context for Phase 3 pinning
   const searchParams = {
     start: start,
@@ -326,6 +329,9 @@ searchBtn.addEventListener("click", function () {
     searchParams.waypoints = customWaypoints.slice();
   }
   if (window.setCurrentTrip) window.setCurrentTrip("Road trip from " + start + " to " + end, "roadtrip", searchParams);
+
+  // Record the search now that it's confirmed allowed
+  if (window.recordSearch) window.recordSearch();
 
   if (currentMode === "interval") {
     // ── Interval mode ──────────────────────────────────────────────────────

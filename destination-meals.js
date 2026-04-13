@@ -192,7 +192,7 @@ const destResultsList   = document.getElementById("flight-results-list");
 
 // ── Step 1 → Step 2: search and show results ──────────────────────────────────
 
-destSearchBtn.addEventListener("click", function () {
+destSearchBtn.addEventListener("click", async function () {
   clearDestError();
 
   const cityInput = document.getElementById("dest-city").value.trim();
@@ -200,6 +200,10 @@ destSearchBtn.addEventListener("click", function () {
     showDestError("Please enter a destination city.");
     return;
   }
+
+  // ── Phase 4: check search limit before doing anything ─────────────────────
+  if (window.checkSearchLimit && !await window.checkSearchLimit()) return;
+  if (window.recordSearch) window.recordSearch();
 
   // Collect selected dietary preferences
   const selectedDiets = Array.from(dietMenu.querySelectorAll("input:checked"))

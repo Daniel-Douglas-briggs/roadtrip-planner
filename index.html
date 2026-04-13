@@ -34,9 +34,9 @@
 
       <!-- Tabs — centred -->
       <div class="nav-tabs">
-        <a href="index.html" class="nav-tab nav-tab--active">Road Trip Meals</a>
-        <a href="flight-meals.html" class="nav-tab">Flight Meals</a>
-        <a href="destination-meals.html" class="nav-tab">Destination Meals</a>
+        <a href="index.html" class="nav-tab nav-tab--active"><span class="nav-tab-text">Road Trip Meals</span></a>
+        <a href="flight-meals.html" class="nav-tab"><span class="nav-tab-text">Flight Meals</span></a>
+        <a href="destination-meals.html" class="nav-tab"><span class="nav-tab-text">Destination Meals</span></a>
       </div>
 
       <!-- Auth — far right -->
@@ -222,13 +222,6 @@
           <!-- The big button that kicks everything off -->
           <button type="button" id="search-btn">Find Meal Options</button>
 
-          <div class="theme-toggle-row">
-            <span class="theme-toggle-label">Dark mode</span>
-            <button class="theme-toggle-btn" aria-label="Toggle dark mode" aria-pressed="false">
-              <span class="theme-toggle-thumb"></span>
-            </button>
-          </div>
-
         </form>
 
         <!-- RESULTS: this section is hidden until the user searches -->
@@ -275,6 +268,12 @@
 
     <!-- FOOTER -->
     <footer>
+      <div class="footer-toggle">
+        <span class="theme-toggle-label">Dark mode</span>
+        <button class="theme-toggle-btn" aria-label="Toggle dark mode" aria-pressed="false">
+          <span class="theme-toggle-thumb"></span>
+        </button>
+      </div>
       <p>Built with Google Maps &amp; Places API</p>
     </footer>
 
@@ -286,6 +285,7 @@
     <script type="module" src="auth.js"></script>
     <script type="module" src="preferences.js"></script>
     <script type="module" src="trips.js"></script>
+    <script type="module" src="limits.js"></script>
 
     <!-- Google Maps API — loads the map, places search, and geometry tools.
          "callback=initMap" tells Google to call our initMap() function

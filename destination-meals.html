@@ -20,9 +20,9 @@
 
       <!-- Tabs — centred -->
       <div class="nav-tabs">
-        <a href="index.html" class="nav-tab">Road Trip Meals</a>
-        <a href="flight-meals.html" class="nav-tab">Flight Meals</a>
-        <a href="destination-meals.html" class="nav-tab nav-tab--active">Destination Meals</a>
+        <a href="index.html" class="nav-tab"><span class="nav-tab-text">Road Trip Meals</span></a>
+        <a href="flight-meals.html" class="nav-tab"><span class="nav-tab-text">Flight Meals</span></a>
+        <a href="destination-meals.html" class="nav-tab nav-tab--active"><span class="nav-tab-text">Destination Meals</span></a>
       </div>
 
       <!-- Auth — far right -->
@@ -157,13 +157,6 @@
 
             <button type="button" id="dest-search-btn">Find Meal Options</button>
 
-            <div class="theme-toggle-row">
-              <span class="theme-toggle-label">Dark mode</span>
-              <button class="theme-toggle-btn" aria-label="Toggle dark mode" aria-pressed="false">
-                <span class="theme-toggle-thumb"></span>
-              </button>
-            </div>
-
           </form>
 
         </div>
@@ -203,6 +196,12 @@
 
     <!-- FOOTER -->
     <footer>
+      <div class="footer-toggle">
+        <span class="theme-toggle-label">Dark mode</span>
+        <button class="theme-toggle-btn" aria-label="Toggle dark mode" aria-pressed="false">
+          <span class="theme-toggle-thumb"></span>
+        </button>
+      </div>
       <p>Built with Google Maps &amp; Places API</p>
     </footer>
 
@@ -225,6 +224,7 @@
     <script type="module" src="auth.js"></script>
     <script type="module" src="preferences.js"></script>
     <script type="module" src="trips.js"></script>
+    <script type="module" src="limits.js"></script>
 
     <!-- My Trips slide-in panel -->
     <div id="trips-overlay" class="trips-overlay hidden"></div>

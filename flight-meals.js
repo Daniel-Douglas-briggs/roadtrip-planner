@@ -615,8 +615,12 @@ tabRoute.addEventListener("click", function () {
 
 // ── Step 1 → Step 2: search and show results ──────────────────────────────────
 
-flightSearchBtn.addEventListener("click", function () {
+flightSearchBtn.addEventListener("click", async function () {
   clearFlightError();
+
+  // ── Phase 4: check search limit before doing anything ─────────────────────
+  if (window.checkSearchLimit && !await window.checkSearchLimit()) return;
+  if (window.recordSearch) window.recordSearch();
 
   // ── Shared: collect dietary preferences ──────────────────────────────────
   const selectedDiets = Array.from(dietMenu.querySelectorAll("input:checked"))

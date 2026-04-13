@@ -94,7 +94,16 @@ async function pinRestaurant(uid, placeData) {
       restaurants: [...existing.restaurants, restaurant],
     });
   } else {
-    // First pin for this trip — create the trip document
+    // First pin for this trip — check save limit before creating
+    const savedCount = Object.keys(tripsData).length;
+    const saveLimit  = window.getSaveLimit ? window.getSaveLimit() : 2;
+    const tier       = window.getUserTier ? window.getUserTier() : null;
+
+    if (tier !== "paid" && savedCount >= saveLimit) {
+      if (window.showSaveLimitModal) window.showSaveLimitModal();
+      return;
+    }
+
     await setDoc(tripRef, {
       title:        currentTripTitle,
       type:         currentTripType,
