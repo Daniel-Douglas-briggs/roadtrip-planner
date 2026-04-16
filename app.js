@@ -137,7 +137,8 @@ const searchBtn = document.getElementById("search-btn");
 
 let currentMode    = "custom"; // "interval" or "custom"
 let customWaypoints = [];        // city strings the user has added in custom mode
-let waypointAutocomplete = null; // Google Places Autocomplete for the waypoint input
+let waypointAutocomplete    = null; // Google Places Autocomplete for the waypoint input
+let customCityAutocomplete  = null; // Google Places Autocomplete for the "Add a stop" input
 
 const modeIntervalBtn   = document.getElementById("mode-interval-btn");
 const modeCustomBtn     = document.getElementById("mode-custom-btn");
@@ -204,6 +205,24 @@ function setupWaypointAutocomplete() {
     waypointCityInput.value = "";
     renderWaypointsList();
   });
+}
+
+// Attach Google Places Autocomplete to the "Add a specific city" input.
+// Called once a route has been rendered — uses the route's bounding box so
+// suggestions are biased toward the corridor the user is actually driving.
+function setupCustomCityAutocomplete(routeBounds) {
+  if (customCityAutocomplete) {
+    // Already set up — just update the bias to the new route
+    customCityAutocomplete.setBounds(routeBounds);
+    return;
+  }
+
+  customCityAutocomplete = new google.maps.places.Autocomplete(
+    document.getElementById("custom-city"),
+    { types: ["(cities)"] }
+  );
+
+  customCityAutocomplete.setBounds(routeBounds);
 }
 
 // Add a city to the list when the button is clicked …
@@ -387,6 +406,7 @@ function planRoute(start, end, intervalMiles, diet) {
 
       // Calculate total distance in miles
       const route       = result.routes[0];
+      setupCustomCityAutocomplete(route.bounds);
       const totalMeters = route.legs.reduce(function (sum, leg) {
         return sum + leg.distance.value;
       }, 0);
@@ -446,6 +466,7 @@ function planRouteWithWaypoints(start, end, stopCities, diet) {
       directionsRenderer.setDirections(result);
 
       const route       = result.routes[0];
+      setupCustomCityAutocomplete(route.bounds);
       const totalMeters = route.legs.reduce(function (sum, leg) {
         return sum + leg.distance.value;
       }, 0);
@@ -732,6 +753,7 @@ function displayResults(results, totalMiles) {
   resetButton();
   resultBox.classList.remove("hidden");
   stopsList.innerHTML = "";
+  setupRoadTripLogoFade();
 
   // Summary line at the top of the list
   const summary      = document.createElement("p");
@@ -874,6 +896,27 @@ function addStopCard(number, locationName, places, location, windowPoints, pool)
           });
         });
       }
+
+      // Dismiss button — removes this restaurant row from the list
+      const dismissBtn = document.createElement("button");
+      dismissBtn.type      = "button";
+      dismissBtn.className = "dismiss-btn";
+      dismissBtn.title     = "Remove this result";
+      dismissBtn.innerHTML = "&#x2715;";
+      dismissBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        row.remove();
+        // Keep divider correct: all rows except the new last one get the divider class
+        const remaining = Array.from(optionsContainer.querySelectorAll(".restaurant-option"));
+        remaining.forEach(function (s, idx) {
+          if (idx < remaining.length - 1) {
+            s.classList.add("restaurant-option--divider");
+          } else {
+            s.classList.remove("restaurant-option--divider");
+          }
+        });
+      });
+      row.appendChild(dismissBtn);
 
       const restaurantLocation = place.geometry.location;
       row.addEventListener("click", function () {
@@ -1112,6 +1155,7 @@ function showPoolMarkers(pool, displayedPlaces) {
 // ── UI helpers ────────────────────────────────────────────────────────────────
 
 function showLoading() {
+  resetRoadTripLogoFade();
   resultBox.classList.remove("hidden");
   stopsList.innerHTML = '<li class="loading-message">🔍 Calculating route and finding stops…</li>';
   searchBtn.disabled    = true;
@@ -1264,6 +1308,11 @@ function addCustomStopCard(locationName, places, location) {
     row.className = "restaurant-option" + (i < places.length - 1 ? " restaurant-option--divider" : "");
     row.style.cursor = "pointer";
     row.innerHTML = `
+      <button class="pin-btn${window.isPinned && window.isPinned(place.place_id) ? ' pin-btn--pinned' : ''}"
+              data-place-id="${place.place_id}"
+              title="${window.isPinned && window.isPinned(place.place_id) ? 'Remove from My Trips' : 'Save to My Trips'}">
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+      </button>
       <div class="option-label">Option ${String.fromCharCode(65 + i)}</div>
       <div class="restaurant-name">${name}</div>
       <div class="restaurant-address">${address}</div>
@@ -1287,6 +1336,41 @@ function addCustomStopCard(locationName, places, location) {
       </div>
     `;
 
+    // Pin button — save this restaurant to My Trips
+    const pinBtn = row.querySelector(".pin-btn");
+    if (pinBtn) {
+      pinBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        if (window.togglePin) window.togglePin({
+          placeId: place.place_id,
+          name:    place.name,
+          address: address,
+          rating:  place.rating  || null,
+          website: place.website || null,
+        });
+      });
+    }
+
+    // Dismiss button — removes this row from the list
+    const dismissBtn = document.createElement("button");
+    dismissBtn.type      = "button";
+    dismissBtn.className = "dismiss-btn";
+    dismissBtn.title     = "Remove this result";
+    dismissBtn.innerHTML = "&#x2715;";
+    dismissBtn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      row.remove();
+      const remaining = Array.from(li.querySelectorAll(".restaurant-option"));
+      remaining.forEach(function (s, idx) {
+        if (idx < remaining.length - 1) {
+          s.classList.add("restaurant-option--divider");
+        } else {
+          s.classList.remove("restaurant-option--divider");
+        }
+      });
+    });
+    row.appendChild(dismissBtn);
+
     const restaurantLocation = place.geometry.location;
     row.addEventListener("click", function () {
       addRestaurantMarker(restaurantLocation, name, "custom-" + i);
@@ -1305,6 +1389,28 @@ function addCustomStopCard(locationName, places, location) {
 
   stopsList.appendChild(li);
   addMarker(location, "★", locationName);
+}
+
+
+// ── Logo fade on results scroll ───────────────────────────────────────────────
+
+const roadTripScroller = document.querySelector(".sidebar");
+const navBrandRoadTrip = document.querySelector(".nav-brand");
+
+function onRoadTripScroll() {
+  // Start fading after 60 px, fully gone by 160 px
+  var t = Math.max(0, Math.min(1, (roadTripScroller.scrollTop - 60) / 100));
+  navBrandRoadTrip.style.opacity = 1 - t;
+}
+
+function setupRoadTripLogoFade() {
+  navBrandRoadTrip.style.opacity = 1;
+  roadTripScroller.addEventListener("scroll", onRoadTripScroll);
+}
+
+function resetRoadTripLogoFade() {
+  roadTripScroller.removeEventListener("scroll", onRoadTripScroll);
+  navBrandRoadTrip.style.opacity = 1;
 }
 
 
@@ -1328,6 +1434,11 @@ const PLACEHOLDER_CITIES = {
     "Memphis, Tennessee", "Chattanooga, Tennessee", "Flagstaff, Arizona", "Boise, Idaho",
     "Tulsa, Oklahoma", "Knoxville, Tennessee", "Springfield, Missouri", "El Paso, Texas",
     "Albuquerque, New Mexico", "Shreveport, Louisiana", "Columbia, South Carolina", "Reno, Nevada"
+  ],
+  custom: [
+    "Joplin, Missouri", "Little Rock, Arkansas", "Amarillo, Texas", "Wichita, Kansas",
+    "Lubbock, Texas", "Jackson, Mississippi", "Montgomery, Alabama", "Tallahassee, Florida",
+    "Bakersfield, California", "Spokane, Washington", "Billings, Montana", "Rapid City, South Dakota"
   ]
 };
 
@@ -1337,12 +1448,12 @@ const STAGGER      = 3000;  // ms between each bar's turn
 const CYCLE_TIME   = 12000; // ms between each bar's own successive changes
 
 function animatePlaceholderChange(inputEl, newText) {
-  if (inputEl.value !== "") return; // user is typing — leave it alone
+  if (inputEl.value !== "" || document.hidden) return;
 
   let pos = inputEl.placeholder.length;
 
   function erase() {
-    if (inputEl.value !== "") return;
+    if (inputEl.value !== "" || document.hidden) return;
     if (pos > 0) {
       pos--;
       inputEl.placeholder = inputEl.placeholder.slice(0, pos);
@@ -1353,7 +1464,7 @@ function animatePlaceholderChange(inputEl, newText) {
   }
 
   function typeIn(i) {
-    if (inputEl.value !== "") return;
+    if (inputEl.value !== "" || document.hidden) return;
     if (i < newText.length) {
       inputEl.placeholder = newText.slice(0, i + 1);
       setTimeout(() => typeIn(i + 1), TYPE_SPEED);
@@ -1368,9 +1479,11 @@ function startCoordinatedCycle() {
     { el: document.getElementById("start"),               cities: PLACEHOLDER_CITIES.start,    index: 0 },
     { el: document.getElementById("end"),                 cities: PLACEHOLDER_CITIES.end,      index: 0 },
     { el: document.getElementById("waypoint-city-input"), cities: PLACEHOLDER_CITIES.waypoint, index: 0 },
+    { el: document.getElementById("custom-city"),         cities: PLACEHOLDER_CITIES.custom,   index: 0 },
   ];
 
   function runCycle() {
+    if (document.hidden) return;
     bars.forEach((bar, i) => {
       setTimeout(() => {
         animatePlaceholderChange(bar.el, bar.cities[bar.index % bar.cities.length]);
@@ -1381,6 +1494,17 @@ function startCoordinatedCycle() {
 
   runCycle();
   setInterval(runCycle, CYCLE_TIME);
+
+  // When the user returns to the tab, reset all placeholders and restart
+  // cleanly — prevents the backed-up callbacks from firing in rapid succession.
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden) {
+      bars.forEach(function (bar) {
+        if (bar.el && bar.el.value === "") bar.el.placeholder = "";
+      });
+      runCycle();
+    }
+  });
 }
 
 document.addEventListener("DOMContentLoaded", startCoordinatedCycle);

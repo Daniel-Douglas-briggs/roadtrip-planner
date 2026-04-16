@@ -676,7 +676,7 @@ function startDestPlaceholderCycle() {
   const PAUSE_AFTER  = 6000;
 
   function tick() {
-    if (inputEl.value !== "") {
+    if (inputEl.value !== "" || document.hidden) {
       setTimeout(tick, 500);
       return;
     }
@@ -706,6 +706,16 @@ function startDestPlaceholderCycle() {
       setTimeout(tick, DELETE_SPEED);
     }
   }
+
+  // When the user returns to the tab, reset to a clean state so the animation
+  // restarts smoothly rather than catching up on backed-up callbacks.
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden && inputEl.value === "") {
+      inputEl.placeholder = "";
+      charIndex  = 0;
+      isDeleting = false;
+    }
+  });
 
   setTimeout(tick, 0);
 }

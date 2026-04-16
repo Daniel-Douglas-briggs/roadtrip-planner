@@ -1220,6 +1220,27 @@ function renderAirportCard(cardIndex, code, restaurants, selectedDiets, error, l
         });
       }
 
+      // Dismiss button — removes this restaurant row from the list
+      const dismissBtn = document.createElement("button");
+      dismissBtn.type      = "button";
+      dismissBtn.className = "dismiss-btn";
+      dismissBtn.title     = "Remove this result";
+      dismissBtn.innerHTML = "&#x2715;";
+      dismissBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        item.remove();
+        // Keep divider correct: all rows except the new last one get the divider class
+        const remaining = Array.from(optionsContainer.querySelectorAll(".flight-restaurant-item"));
+        remaining.forEach(function (s, idx) {
+          if (idx < remaining.length - 1) {
+            s.classList.add("flight-restaurant-item--divider");
+          } else {
+            s.classList.remove("flight-restaurant-item--divider");
+          }
+        });
+      });
+      item.appendChild(dismissBtn);
+
       optionsContainer.appendChild(item);
     });
   }
@@ -1429,12 +1450,12 @@ const FLIGHT_STAGGER      = 3000;
 const FLIGHT_CYCLE_TIME   = 12000;
 
 function animateFlightPlaceholder(inputEl, newText) {
-  if (inputEl.value !== "") return;
+  if (inputEl.value !== "" || document.hidden) return;
 
   let pos = inputEl.placeholder.length;
 
   function erase() {
-    if (inputEl.value !== "") return;
+    if (inputEl.value !== "" || document.hidden) return;
     if (pos > 0) {
       pos--;
       inputEl.placeholder = inputEl.placeholder.slice(0, pos);
@@ -1445,7 +1466,7 @@ function animateFlightPlaceholder(inputEl, newText) {
   }
 
   function typeIn(i) {
-    if (inputEl.value !== "") return;
+    if (inputEl.value !== "" || document.hidden) return;
     if (i < newText.length) {
       inputEl.placeholder = newText.slice(0, i + 1);
       setTimeout(() => typeIn(i + 1), FLIGHT_TYPE_SPEED);
@@ -1463,6 +1484,7 @@ function startFlightPlaceholderCycle() {
   ];
 
   function runCycle() {
+    if (document.hidden) return;
     bars.forEach((bar, i) => {
       setTimeout(() => {
         if (bar.el && bar.el.value === "") {
@@ -1475,6 +1497,15 @@ function startFlightPlaceholderCycle() {
 
   runCycle();
   setInterval(runCycle, FLIGHT_CYCLE_TIME);
+
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden) {
+      bars.forEach(function (bar) {
+        if (bar.el && bar.el.value === "") bar.el.placeholder = "";
+      });
+      runCycle();
+    }
+  });
 }
 
 document.addEventListener("DOMContentLoaded", startFlightPlaceholderCycle);
