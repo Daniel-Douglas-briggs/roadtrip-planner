@@ -1093,15 +1093,10 @@ function renderAirportCard(cardIndex, code, restaurants, selectedDiets, error, l
         icon:     makeTeardropIcon("#D4870A", { scale: 1 }),
       });
 
-      const infoWindow = new google.maps.InfoWindow({
-        content:
-          '<strong>' + place.name + '</strong>' +
-          (place.rating ? '<br>★ ' + place.rating.toFixed(1) : ''),
-      });
-
-      marker.addListener("click", function () {
-        infoWindow.open(flightMap, marker);
-      });
+      attachPinPopup(marker, place, flightMap, function () {
+        var p = document.getElementById('flight-left-panel');
+        return p && p.classList.contains('sidebar--collapsed');
+      }, function () { return currentSelectedDiets; });
 
       flightMarkers.push(marker);
       flightBounds.extend(place.geometry.location);

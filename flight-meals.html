@@ -16,16 +16,7 @@
     <nav class="app-nav">
       <!-- Logo — far left -->
       <div class="nav-brand">
-        <h1>N<svg class="logo-oo" viewBox="0 0 68 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <!-- Fuselage — large rounded pill spanning nearly full height -->
-          <rect x="26" y="1" width="16" height="34" rx="8" stroke="currentColor" stroke-width="2"/>
-          <!-- Wings sweeping from fuselage out over the engines -->
-          <line x1="26" y1="13" x2="3" y2="13" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-          <line x1="42" y1="13" x2="65" y2="13" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-          <!-- Engines as the "oo" — filled with hollow cut-out centres, vertically centred -->
-          <path fill-rule="evenodd" fill="currentColor" d="M14 7A11 11 0 1 0 14 29A11 11 0 1 0 14 7Z M14 13.5A4.5 4.5 0 1 0 14 22.5A4.5 4.5 0 1 0 14 13.5Z"/>
-          <path fill-rule="evenodd" fill="currentColor" d="M54 7A11 11 0 1 0 54 29A11 11 0 1 0 54 7Z M54 13.5A4.5 4.5 0 1 0 54 22.5A4.5 4.5 0 1 0 54 13.5Z"/>
-        </svg>rish</h1>
+        <h1>N<svg class="logo-oo" viewBox="0 0 48 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill-rule="evenodd" d="M13 1C7.5 1 3 5.5 3 11c0 6.5 10 20 10 20s10-13.5 10-20c0-5.5-4.5-10-10-10z M16.5 11A3.5 3.5 0 1 0 9.5 11A3.5 3.5 0 1 0 16.5 11Z" fill="currentColor"/><path fill-rule="evenodd" d="M35 1C29.5 1 25 5.5 25 11c0 6.5 10 20 10 20s10-13.5 10-20c0-5.5-4.5-10-10-10z M38.5 11A3.5 3.5 0 1 0 31.5 11A3.5 3.5 0 1 0 38.5 11Z" fill="currentColor"/></svg>rish</h1>
       </div>
 
       <!-- Tabs — centred -->
@@ -226,6 +217,11 @@
 
       <!-- ── Preview map — shown before any search is run ────────────────── -->
       <section class="flight-preview-map-panel">
+        <button class="sidebar-toggle-btn" aria-label="Collapse search panel" data-collapsed="false">
+          <svg class="toggle-chevron" width="8" height="14" viewBox="0 0 8 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M6 2L2 7L6 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
         <div id="flight-preview-map"></div>
       </section>
 
@@ -248,6 +244,11 @@
 
         <!-- Right: standalone map with a pin for every restaurant -->
         <div id="flight-map-panel">
+          <button class="sidebar-toggle-btn" aria-label="Collapse search panel" data-collapsed="false">
+            <svg class="toggle-chevron" width="8" height="14" viewBox="0 0 8 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M6 2L2 7L6 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
           <div id="flight-map"></div>
         </div>
       </div>
@@ -268,6 +269,8 @@
     <!-- flight-meals.js must load BEFORE the Maps API so initFlightMeals()
          is defined in time for Google to call it -->
     <script src="theme.js"></script>
+    <script src="sidebar-toggle.js"></script>
+    <script src="pin-popup.js"></script>
     <script src="flight-meals.js"></script>
 
     <!-- Google Maps API — same key as the road trip page.

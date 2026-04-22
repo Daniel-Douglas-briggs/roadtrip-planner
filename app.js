@@ -1008,7 +1008,12 @@ function addStopCard(number, locationName, places, location, windowPoints, pool)
   stopsList.appendChild(li);
 
   // Drop a numbered green pin at the waypoint (one pin per stop)
-  addMarker(location, number, places[0].name);
+  addMarker(location, number, places[0].name, {
+    number: number,
+    locationName: locationName,
+    restaurants: places,
+    pool: pool,
+  });
 }
 
 // Shown when the Places search returned nothing for a stop
@@ -1062,13 +1067,19 @@ function makeTeardropIcon(fillColor, opts) {
 
 // ── Map marker helpers ────────────────────────────────────────────────────────
 
-function addMarker(location, number, title) {
+function addMarker(location, number, title, stopData) {
   const marker = new google.maps.Marker({
     position: location,
     map:      map,
     title:    title,
     icon:     makeTeardropIcon("#1A1A2E", { scale: 1.15, label: String(number) }),
   });
+  if (stopData && window.attachStopPopup) {
+    attachStopPopup(marker, stopData, map, function () {
+      var s = document.querySelector('.sidebar');
+      return s && s.classList.contains('sidebar--collapsed');
+    }, function () { return currentSelectedDiets; });
+  }
   markers.push(marker);
 }
 
@@ -1147,6 +1158,10 @@ function showPoolMarkers(pool, displayedPlaces) {
       title:    place.name,
       icon:     isDisplayed ? greenRestaurantIcon() : orangeRestaurantIcon(),
     });
+    attachPinPopup(marker, place, map, function () {
+      var p = document.querySelector('.sidebar');
+      return p && p.classList.contains('sidebar--collapsed');
+    }, function () { return currentSelectedDiets; });
     poolMarkers.push({ marker: marker, placeId: place.place_id, isDisplayed: isDisplayed });
   });
 }

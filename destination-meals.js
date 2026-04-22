@@ -24,6 +24,9 @@ let destMap     = null;
 let destMarkers = [];
 let destBounds  = null;
 
+// Dietary preferences from the most recent search (used by pin popups)
+let currentSelectedDiets = [];
+
 
 // ── Called automatically by Google when the Maps API finishes loading ─────────
 
@@ -360,6 +363,7 @@ function hasDietaryMention(place, diets) {
 // ── Render the restaurant results ─────────────────────────────────────────────
 
 function renderDestResults(restaurants, selectedDiets, pool, cityLocation) {
+  currentSelectedDiets = selectedDiets;
   const card = document.getElementById("dest-results-card");
   if (!card || restaurants.length === 0) return;
 
@@ -396,15 +400,10 @@ function renderDestResults(restaurants, selectedDiets, pool, cityLocation) {
       icon:     makeTeardropIcon("#D4870A", { scale: 1 }),
     });
 
-    const infoWindow = new google.maps.InfoWindow({
-      content:
-        "<strong>" + place.name + "</strong>" +
-        (place.rating ? "<br>★ " + place.rating.toFixed(1) : ""),
-    });
-
-    marker.addListener("click", function () {
-      infoWindow.open(destMap, marker);
-    });
+    attachPinPopup(marker, place, destMap, function () {
+      var p = document.getElementById('flight-left-panel');
+      return p && p.classList.contains('sidebar--collapsed');
+    }, function () { return currentSelectedDiets; });
 
     destMarkers.push(marker);
     destBounds.extend(place.geometry.location);

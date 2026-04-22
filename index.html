@@ -17,19 +17,7 @@
     <nav class="app-nav">
       <!-- Logo — far left -->
       <div class="nav-brand">
-        <h1>N<svg class="logo-oo" viewBox="0 0 72 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <!-- Sporty fastback body with wheel arch cutouts -->
-          <path d="M5,20 L9,14 L21,10 L29,4 L46,4 L58,10 L65,15 L67,20 L62,20 Q56,15 50,20 L22,20 Q16,15 10,20 Z"
-                stroke="currentColor" stroke-width="2" stroke-linejoin="round" fill="none"/>
-          <!-- Window greenhouse -->
-          <path d="M22,10 L29,4 L46,4 L55,10 Z"
-                stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
-          <!-- Wheels (the "oo") -->
-          <circle cx="16" cy="26" r="8" stroke="currentColor" stroke-width="2"/>
-          <circle cx="16" cy="26" r="3" fill="currentColor"/>
-          <circle cx="56" cy="26" r="8" stroke="currentColor" stroke-width="2"/>
-          <circle cx="56" cy="26" r="3" fill="currentColor"/>
-        </svg>rish</h1>
+        <h1>N<svg class="logo-oo" viewBox="0 0 48 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path fill-rule="evenodd" d="M13 1C7.5 1 3 5.5 3 11c0 6.5 10 20 10 20s10-13.5 10-20c0-5.5-4.5-10-10-10z M16.5 11A3.5 3.5 0 1 0 9.5 11A3.5 3.5 0 1 0 16.5 11Z" fill="currentColor"/><path fill-rule="evenodd" d="M35 1C29.5 1 25 5.5 25 11c0 6.5 10 20 10 20s10-13.5 10-20c0-5.5-4.5-10-10-10z M38.5 11A3.5 3.5 0 1 0 31.5 11A3.5 3.5 0 1 0 38.5 11Z" fill="currentColor"/></svg>rish</h1>
       </div>
 
       <!-- Tabs — centred -->
@@ -256,6 +244,11 @@
 
       <!-- RIGHT PANEL: where the map will appear -->
       <section class="map-panel">
+        <button class="sidebar-toggle-btn" aria-label="Collapse search panel" data-collapsed="false">
+          <svg class="toggle-chevron" width="8" height="14" viewBox="0 0 8 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M6 2L2 7L6 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
         <!-- Google Maps draws itself into this empty div -->
         <div id="map"></div>
         <!-- Shown if the Google Maps API fails to load -->
@@ -284,6 +277,8 @@
          loads first before JavaScript runs -->
     <!-- app.js must load BEFORE the Maps API so initMap() is defined in time -->
     <script src="theme.js"></script>
+    <script src="sidebar-toggle.js"></script>
+    <script src="pin-popup.js"></script>
     <script src="app.js"></script>
     <script type="module" src="auth.js"></script>
     <script type="module" src="preferences.js"></script>

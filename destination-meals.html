@@ -164,6 +164,11 @@
 
       <!-- Preview map — shown before any search is run -->
       <section class="flight-preview-map-panel">
+        <button class="sidebar-toggle-btn" aria-label="Collapse search panel" data-collapsed="false">
+          <svg class="toggle-chevron" width="8" height="14" viewBox="0 0 8 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M6 2L2 7L6 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
         <div id="dest-preview-map"></div>
       </section>
 
@@ -187,6 +192,11 @@
 
         <!-- Right: map with a pin for every restaurant -->
         <div id="flight-map-panel">
+          <button class="sidebar-toggle-btn" aria-label="Collapse search panel" data-collapsed="false">
+            <svg class="toggle-chevron" width="8" height="14" viewBox="0 0 8 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M6 2L2 7L6 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
           <div id="flight-map"></div>
         </div>
       </div>
@@ -208,6 +218,8 @@
     <!-- destination-meals.js must load BEFORE the Maps API so initDestMeals()
          is defined in time for Google to call it -->
     <script src="theme.js"></script>
+    <script src="sidebar-toggle.js"></script>
+    <script src="pin-popup.js"></script>
     <script src="destination-meals.js"></script>
 
     <!-- Google Maps API — same key as the other pages.
